@@ -44,6 +44,7 @@ SOURCEFIGS = \
 	$(SRC)/lte/doc/source/figures/lte-sl-pssch-bitmap.dia \
 	$(SRC)/lte/doc/source/figures/prose-non-roaming-arch.dia \
 	$(SRC)/lte/doc/source/figures/sidelink-scenarios-1c.dia \
+	$(SRC)/lte/doc/source/figures/sidelink-scenarios-1b.dia \
 	$(SRC)/lte/doc/source/figures/sidelink-scenarios-1a.dia \
 	$(SRC)/lte/doc/source/figures/lte-sl-ue-phy.dia \
 	$(SRC)/lte/doc/source/figures/lte-sl-enb-rrc.png \
@@ -74,6 +75,7 @@ IMAGES_EPS = \
 	$(FIGURES)/lte-sl-pssch-bitmap.eps \
 	$(FIGURES)/prose-non-roaming-arch.eps \
 	$(FIGURES)/sidelink-scenarios-1c.eps \
+	$(FIGURES)/sidelink-scenarios-1b.eps \
 	$(FIGURES)/sidelink-scenarios-1a.eps \
 	$(FIGURES)/lte-sl-ue-phy.eps \
 	$(FIGURES)/lte-sl-in-coverage-tx.png \
@@ -119,6 +121,7 @@ RESCALE = ../../utils/rescale-pdf.sh
 # rescale pdf figures as necessary
 $(FIGURES)/prose-non-roaming-arch.pdf_width = 10in
 $(FIGURES)/sidelink-scenarios-1c.pdf_width = 10cm
+$(FIGURES)/sidelink-scenarios-1b.pdf_width = 10cm
 $(FIGURES)/sidelink-scenarios-1a.pdf_width = 10cm
 $(FIGURES)/lte-sl-simple-scenario.pdf_width = 4in
 $(FIGURES)/lte-sl-simple-OofCovrg-scenario.pdf_width = 3in

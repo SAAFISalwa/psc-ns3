@@ -78,6 +78,7 @@ IMAGES_DIA = \
 	$(FIGURES)/lena-radio-link-failure-one-enb.dia \
 	$(FIGURES)/lena-radio-link-failure-two-enb.dia \
 	$(FIGURES)/sidelink-scenarios-1a.dia \
+	$(FIGURES)/sidelink-scenarios-1b.dia \
 	$(FIGURES)/lte-sl-ue-phy.dia \
 	$(FIGURES)/lte-sl-simple-scenario.dia \
 	$(FIGURES)/lte-sl-simple-OofCovrg-scenario.dia \

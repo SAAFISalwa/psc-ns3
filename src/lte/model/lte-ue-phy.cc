@@ -2321,7 +2321,8 @@ LteUePhy::ReceiveLteDlHarqFeedback (DlInfoListElement_s m)
   // generate feedback to eNB and send it through ideal PUCCH
   Ptr<DlHarqFeedbackLteControlMessage> msg = Create<DlHarqFeedbackLteControlMessage> ();
   msg->SetDlHarqFeedback (m);
-  SetControlMessages (msg);
+  SetControlMessages (msg);  
+  //we do not notify MAC here because it was done when we processed the DL_DCI
 }
 
 void

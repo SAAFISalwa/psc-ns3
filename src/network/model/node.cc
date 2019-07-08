@@ -31,6 +31,7 @@
 #include "ns3/assert.h"
 #include "ns3/global-value.h"
 #include "ns3/boolean.h"
+#include <algorithm>
 
 namespace ns3 {
 
@@ -138,6 +139,16 @@ Node::AddDevice (Ptr<NetDevice> device)
   NotifyDeviceAdded (device);
   return index;
 }
+
+void
+Node::RemoveDevice (Ptr<NetDevice> device)
+{
+  NS_LOG_FUNCTION (this << device);
+  std::vector<Ptr<NetDevice> >::iterator it = std::remove(m_devices.begin(), m_devices.end(), device);
+  NS_ASSERT_MSG (it != m_devices.end (), "Device not in node");
+  m_devices.erase(it);
+}
+
 Ptr<NetDevice>
 Node::GetDevice (uint32_t index) const
 {
@@ -146,6 +157,7 @@ Node::GetDevice (uint32_t index) const
                  " is out of range (only have " << m_devices.size () << " devices).");
   return m_devices[index];
 }
+
 uint32_t 
 Node::GetNDevices (void) const
 {

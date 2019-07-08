@@ -6,8 +6,9 @@ LTE Sidelink
 Overview
 --------
 
-This section describes the |ns3| support for LTE Device to Device (D2D)
-communication based on the model published in [NIST2016]_ [NIST2017]_.
+This section describes the |ns3| support for LTE Device to Device
+(D2D) communication based on the model published in [NIST2016]_
+[NIST2017]_ and extended to support UE-to-Network Relay operations.
 
 
 3GPP introduced D2D Proximity Services (ProSe) in release 12 to allow ProSe
@@ -43,9 +44,9 @@ the UEs. Thus, four scenarios were identified by 3GPP [TR36843]_:
 
  1D. In-Coverage-Multi-Cell
 
-At this stage, the model has been tested for scenario 1A and 1C. The Table
+At this stage, the model has been tested for scenario 1A, 1B, and 1C. The Table
 :ref:`tab-ns-3-LTE-Sidelink-supported-scenarios` gives more information about
-the support of these two scenarios for all the three ProSe services.
+the support of these three scenarios for all the three ProSe services.
 
 .. tabularcolumns:: |c|p{1.58cm}|p{1.2cm}|p{1.2cm}|p{1.9cm}|p{1.8cm}|p{2.3cm}|c|
 
@@ -60,6 +61,12 @@ the support of these two scenarios for all the three ProSe services.
    | 1A | Out-of-Coverage | Out-of-Coverage | Out-of-Coverage | Yes           | Yes         | Yes             | .. image:: figures/sidelink-scenarios-1a.*    |
    |    |                 |                 |                 |               |             |                 |    :scale: 30 %                               |
    |    |                 |                 |                 | RA = Mode 2   | RA = Type 1 | Autonomous      |                                               |
+   |    |                 |                 |                 |               |             | synchronization |                                               |
+   +----+-----------------+-----------------+-----------------+---------------+-------------+-----------------+-----------------------------------------------+
+   | 1B | Partial Coverag | In-Coverage     | Out-of-Coverage | Yes           | Yes         | Yes             | .. image:: figures/sidelink-scenarios-1b.*    |
+   |    | Single Cell     |                 |                 |               |             |                 |    :scale: 30 %                               |
+   |    |                 |                 |                 | RA = Mode 2   | RA = Type 1 | Network and     |                                               |
+   |    |                 |                 |                 |               |             | autonomous      |                                               |
    |    |                 |                 |                 |               |             | synchronization |                                               |
    +----+-----------------+-----------------+-----------------+---------------+-------------+-----------------+-----------------------------------------------+
    | 1C | In-Coverage     | In-Coverage     | In-Coverage     | Yes           | Yes         | Yes             | .. image:: figures/sidelink-scenarios-1c.*    |
@@ -108,26 +115,64 @@ to the PHY/channel architecture of the UE.
 NAS
 +++
 
-In LTE module, the NAS layer functionality is provided by ``EpcUeNas`` class. In
-addition to its existing capabilities, this class has been extended to support
-LTE ProSe services. In particular, direct communication and direct discovery.
+In LTE module, the NAS layer functionality is provided by ``EpcUeNas``
+class. In addition to its existing capabilities, this class has been
+extended to support LTE ProSe services, namely direct
+communication, direct discovery, UE-to-Network Relay.
 
 
-For direct communication, it supports the functions to activate/deactivate
-Sidelink bearers. Since, there is no EPS bearer for Sidelink communication, the
-existing TFT can not be used to map IP packets to a Sidelink bearer. Therefore,
-a new type of TFT, called ``LteSlTft`` is implemented. It maps IP packets to the
-Sidelink bearers based only on their destination IP address. Moreover, the
-``Send`` function has been extended for both UE NAS "Active" and "Off" states.
-In the active state, if there is a Sidelink bearer established between the
-source and the destination UE, it utilizes Sidelink bearer to send the packet,
-thus, prioritizing a Sidelink bearer over normal LTE uplink bearer. On the other
-hand, in off state in which previously UE was unable to send the packets, is now
-able to use a Sidelink bearer, if established.
+For direct communication, it supports the functions to
+activate/deactivate Sidelink bearers. Since, there is no EPS bearer
+for Sidelink communication, the existing TFT can not be used to map IP
+packets to a Sidelink bearer. Therefore, a new type of TFT, called
+``LteSlTft`` is implemented. It maps IP packets to the Sidelink
+bearers based only on their destination IP address. Moreover, the
+``Send`` function has been extended for both UE NAS "Active" and "Off"
+states.  In the active state, if there is a Sidelink bearer
+established between the source and the destination UE, it utilizes
+Sidelink bearer to send the packet, thus, prioritizing a Sidelink
+bearer over normal LTE uplink bearer. On the other hand, in off state
+in which previously UE was unable to send the packets, is now able to
+use a Sidelink bearer, if established.
+For direct communication, it supports the functions to
+activate/deactivate Sidelink bearers. Since, there is no EPS bearer
+for Sidelink communication, the existing TFT can not be used to map IP
+packets to a Sidelink bearer. Therefore, a new type of TFT, called
+``LteSlTft`` is implemented. Moreover, the Send function has been
+extended for both UE NAS "Active" and "Off" states. In the active
+state, if there is a Sidelink bearer established between the source
+and the destination UE, the UE utilizes the Sidelink bearer to send
+packets, thus prioritizing a Sidelink bearer over normal LTE uplink
+bearer. On the other hand, the off state in which previously the UE
+was unable to send packets, is now able to use a Sidelink bearer if
+established.
 
-For the direct discovery, it conveys the information, e.g., list of discovery
-applications and the nature of the application, i.e., announcing or monitoring
-to ``LteUeRrc`` class.
+The extensions for the direct communication are also useful for
+UE-to-Network Relay communication by helping in sending and receiving
+of packets for the communication between Relay UE and Remote
+UE. Additionally, to support public safety communication scenarios in
+UE-to-Network Relays, the NAS has also been extended to include the
+transfer of IPv6 packets. For handling sidelink data packets at layer
+3, a new ``NetDevice`` called ``LteSlUeNetDevice`` was created and
+contains the essential functions and attributes necessary to receive
+packets from higher layers and send packets to the NAS layer. The
+``EpcUeNas`` now uses TFTs for ingress filtering to forward the
+received packets to the appropriate ``NetDevice``. For the remote UE,
+an ``LteSlTft`` is created to receive any packet with the destination
+address matching the address generated for the Remote UE’s
+``LteSlUeNetDevice``. For a Relay UE, an ``LteSlTft`` is created to
+receive any packet with the source address prefix matching the prefix
+delegated for relay purposes by the core network. Upon receiving a
+packet in the DoRecvData function of ``EpcUeNas``, a check is
+initially made to verify if the Source IP address and the Destination
+IP address in the packet header matches the ingress ``LteSlTft``. If
+yes, the packet is forwarded onto the appropriate sidelink callback
+function. Otherwise, the packet is forwarded onto the uplink callback
+function.
+
+For the direct discovery, it conveys the information, e.g., list of
+discovery applications and the nature of the application, i.e.,
+announcing or monitoring to ``LteUeRrc`` class.
 
 .. _sec-lte-sl-rrc:
 
@@ -215,9 +260,10 @@ allocation is supported.
 UE RRC
 ------
 
-The ``LteUeRrc`` class has been extended to support all the ProSe services for
-both, in-coverage and out-of-coverage mode. To highlight all the modifications,
-lets discuss them in context of each ProSe service.
+The ``LteUeRrc`` and ``LteSlUeRrc`` classes have been extended to
+support all the ProSe services for both, in-coverage and
+out-of-coverage mode. To highlight all the modifications, lets discuss
+them in context of each ProSe service.
 
 Sidelink direct communication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -297,8 +343,7 @@ For the Sidelink direct discovery, ``LteUeRrc`` and ``LteSlUeRrc``
 classes now support creation/removal of discovery applications for
 both in-coverage and out-of-coverage scenarios. The ``LteSlUeRrc``
 class has functions called StartDiscoveryApps and StopDiscoveryApps to
-accomplish this process and is also responsible for transmitting
-discovery messages. These functions take in as arguments the
+accomplish this process. These functions take in as arguments the
 application codes as payloads and the discovery role of the UE which
 are populated using the Sidelink Helper. For the in-coverage scenario,
 communication occurs with the eNB by transmitting the
@@ -314,8 +359,246 @@ IDLE_CAMPED_NORMALLY or in CONNECTED_NORMALLY can receive SIB19
 messages, upon which, Rx pools are updated and populated to the MAC
 and PHY layers. On the other hand, in out-of-coverage scenarios, the
 UE only uses the pre-configured pool.
+ 
+The classes ``LteUeRrc``, ``LteSlUeRrc`` and ``LteSlDiscHeader`` are
+also extended to incorporate Model B application discovery along with
+Model A application discovery. In model A, the announcing UE
+periodically broadcasts PC5_DISCOVERY messages, called announcements,
+to indicate its presence. In model B, the discoverer UE seeks to
+discover UEs by sending a request message with the required
+application code. The discoveree UEs check if the application code is
+present in a list of monitored codes. If present, the UE then
+transmits the same application code as the intended response message
+payload. For both Model A and Model B discovery, the payloads are
+added to the appropriate message in the ``LteSlDiscHeader`` class and
+transmitted using the TransmitApp and TransmitDiscoveryMessage
+functions in ``LteSlUeRrc`` and ``LteUeRrc`` classes respectively. In
+case multiple requests from separate remote UEs are received, the
+model ensures that only one PC5_DISCOVERY response message is sent per
+sidelink period. Multiple responses are not needed since these
+messages are broadcasted.
 
 **Note: At this stage only one pool is supported**
+
+UE-to-Network Relay communication
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A new type of signaling protocol, called PC5 signaling, has been
+defined to establish and maintain a secure direct communication link
+between a Relay UE and a Remote UE. A list of new PC5 signaling
+messages as given in
+:ref:`tab-state-machine-acronyms-pc5-signaling-messages` is generated
+by modeling them as ns-3 headers. The class ``LteSlO2oCommParams`` is
+created which will store the state of the UE, values of different
+one-to-one communication timers and counters and copies of certain PC5
+signaling messages used for retransmission purposes. The list of
+states, timers and counters are given in
+:ref:`tab-state-name-state-machine` and
+:ref:`tab-state-machine-timers-counters-notes` respectively. A
+one-to-one communication context is then defined as the map of UE
+layer 2 ID and its respective ``LteSlO2oCommParams``. Each UE creates
+these contexts during the connection establishment of their respective
+discovery processes.
+
+.. tabularcolumns:: |c|c|
+
+.. _tab-state-machine-acronyms-pc5-signaling-messages:
+
+.. table:: State Machine acronyms and PC5 Signaling Messages 
+
+   +----------------------------------+--------------------------------------------+
+   | Acronym in State Machine diagram | PC5 Signaling Messages                     |
+   |                                  |                                            |
+   +==================================+============================================+
+   | DCA                              | DIRECT_COMMUNICATION_RELEASE_ACCEPT        |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DCK                              | DIRECT_COMMUNICATION_KEEPALIVE             |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DCKA                             | DIRECT_COMMUNICATION_KEEPALIVE_ACK         |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DCR                              | DIRECT_COMMUNICATION_RELEASE               |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DCRA                             | DIRECT_COMMUNICATION_RELEASE_ACCEPT        |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DCRj                             | DIRECT_COMMUNICATION_REJECT                |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DCRq                             | DIRECT_COMMUNICATION_REQUEST               |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DRRq                             | DIRECT_REKEYING_REQUEST                    |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DRRs                             | DIRECT_REKEYING_RESPONSE                   |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DRT                              | DIRECT_REKEYING_TRIGGER                    |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DSMCm                            | DIRECT_SECURITY_MODE_COMMAND               |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DSMCp                            | DIRECT_SECURITY_MODE_COMPLETE              |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | DSMRj                            | DIRECT_SECURITY_MODE_REJECT                |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | RUIRq                            | REMOTE_UE_INFO_REQUEST                     |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+   | RUIRs                            | REMOTE_UE_INFO_RESPONSE                    |
+   |                                  |                                            |
+   +----------------------------------+--------------------------------------------+
+
+.. tabularcolumns:: |c|c|
+
+.. _tab-state-name-state-machine:
+
+.. table:: State Name and Corresponding state in State Machine diagram
+
+   +----------------------------------+-----------------------------------------------+
+   | State Name                       | Corresponding state in State Machine Diagram  |
+   |                                  |                                               |
+   +==================================+===============================================+
+   | RELAY_IDLE                       | Idle (shared for both Relay UE and Remote UE  |
+   |                                  | in the diagram)                               |
+   +----------------------------------+-----------------------------------------------+
+   | RELAY_SETUP_REQUEST              | setup request                                 |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | RELAY_T_SECURE_ESTABLISHED       | T_secure_established                          |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | RELAY_INIT_INFO                  | Init info                                     |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | RELAY_INIT_RELEASE               | Init release (shared for both Relay UE and    |
+   |                                  | Remote UE in the diagram)                     |
+   +----------------------------------+-----------------------------------------------+
+   | REMOTE_IDLE                      | Idle (shared for both Relay UE and Remote UE  |
+   |                                  | in the diagram)                               |
+   +----------------------------------+-----------------------------------------------+
+   | REMOTE_INIT_SETUP                | init setup                                    |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | REMOTE_SECURE_LINK               | secure link                                   |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | REMOTE_I_SECURE_ESTABLISHED      | I_secure_established                          |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | REMOTE_CHECK_LINK                | Check link                                    |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | REMOTE_INIT_RELEASE              | Init release (shared for both Relay UE and    |
+   |                                  | Remote UE in the diagram)                     |
+   +----------------------------------+-----------------------------------------------+
+   
+.. tabularcolumns:: |c|p{9cm}|
+
+.. _tab-state-machine-timers-counters-notes:
+
+.. table:: Timers and Counters in State Machine diagram
+
+   +----------------------------------+-----------------------------------------------+
+   | Timers / Counters in State       | Notes                                         |
+   | Machine diagram                  |                                               |
+   +==================================+===============================================+
+   | T4111                            | Timer 4111 used in Relay UE                   |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | T4103                            | Timer 4103 used in Relay UE and Remote UE     |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | T4108                            | Timer 4108 used in Relay UE                   |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | TRUIR                            | Timer for Remote UE Info Request procedure    |
+   |                                  | used in Relay UE                              |
+   +----------------------------------+-----------------------------------------------+
+   | T4100                            | Timer 4100 used in Remote UE                  |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | T4101                            | Timer 4101 used in Remote UE                  |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | T4102                            | Timer 4102 used in Remote UE                  |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | DCR_count                        | Counter for Direct Communication Release in   |
+   |                                  | Relay UE and Remote UE                        |
+   +----------------------------------+-----------------------------------------------+
+   | RUIR_count                       | Counter for Remote UE Info Request in Relay UE|
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | DCRq_count                       | Counter for Direct Communication Request in   |
+   |                                  | Remote UE                                     |
+   +----------------------------------+-----------------------------------------------+
+   | DCK_count                        | Counter for Direct Communication Keepalive in |
+   |                                  | Remote UE                                     |
+   +----------------------------------+-----------------------------------------------+
+   | ka_count                         | Counter for number of keepalives in Remote UE |
+   |                                  |                                               |
+   +----------------------------------+-----------------------------------------------+
+   | DCR_maximum                      | Maximum value of Direct Communication Release |
+   |                                  | counter in Relay UE and Remote UE             |
+   +----------------------------------+-----------------------------------------------+
+   | RUIR_maximum                     | Maximum value of Remote UE Info Request       |
+   |                                  | counter in Relay UE                           |
+   +----------------------------------+-----------------------------------------------+
+   | DCRq_maximum                     | Maximum value of Direct Communication Request |
+   |                                  | counter in Remote UE                          |
+   +----------------------------------+-----------------------------------------------+
+   | DCK_maximum                      | Maximum value of Direct Communication         |
+   |                                  | Keepalive counter in Remote UE                |
+   +----------------------------------+-----------------------------------------------+
+
+<Insert State Machine Diagram here>
+
+The overall implemented state machine for establishing one-to-one
+communication between Relay UE and Remote UE using PC5 Signaling
+messages is shown in the figure above. For brevity, the single figure
+contains the states and actions for the Relay UE in the blue region,
+the states and actions for the Remote UE in the white and green region
+and common states and actions for both UEs in the orange region.
+
+For UE-to-Network relay operation, the remote UE initiates the
+procedure by sending a DCR message to the relay UE. After the
+successful transfer of the DSMCm and DSMCp messages, the Relay UE
+accepts the direct communication request by sending a DCA
+message. Once established, the Relay UE may request additional
+information from the Remote UE, such as its International Mobile
+Equipment Identity (IMEI), by sending a RUIRq message, for which the
+Remote UE responds back with a RUIRs message. The reception of
+data/signaling messages is used to indicate that the connection is
+active. However, if the Remote UE is not using the relay link for a
+while, keep alive messages called DCK and DCKA are periodically sent
+to maintain the link. When the Remote UE no longer needs to connect to
+the relay, or when the Relay UE no longer supports the Remote UE, a
+DCR and DCRA message is exchanged between the UEs.
+
+UE-to-Network Relay discovery
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Like in sidelink direct discovery, here the classes ``LteUeRrc`` and
+``LteSlUeRrc`` are extended to support the creation/removal of relay
+service codes. In UE-to-Network Relay discovery, the
+``LteSidelinkHelper`` accepts a relay service code to be added to the
+message payload. In Model A Relay discovery, the RRC layer of a UE
+receives a request message with a relay service code in the
+payload. In Model B Relay discovery, it additionally checks if the
+relay service code is present in a list of monitored codes. If
+present, the UE then transmits the same relay service code as the
+intended response payload. In case multiple requests from separate
+remote UEs are received, the model ensures that only one
+"PC5_DISCOVERY" response message is sent per sidelink period. Multiple
+responses are not needed since these messages are broadcasted.
 
 Sidelink synchronization
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -382,16 +665,21 @@ there is no data to be transmitted the UE stops transmitting the SLSS.
 PDCP
 ++++
 
-The ``LtePdcp`` class has been extended to include ProSe source Layer 2 ID and
-the ProSe Layer-2 Group ID to identify the PDCP/RLC pair to be used in the
-receiving UE. The reason is that in Sidelink, each radio bearer is associated
-with one PDCP entity. And, each PDCP entity is associated to one RLC entity,
-since it uses RLC-UM mode for the transmission / reception [TS36323]_. Thus,
-given the nature of Sidelink communication, i.e., one to many, it may happen
-that multiple UEs transmit to a single UE, assigning LCIDs independently. It may
-happen that two UEs select same LCID for the same group. Therefore, for a
-receiving UE to distinguish between two Sidelink Radio bearers (SLRBs) with the
-similar LCIDs requires additional identifiers.
+The ``LtePdcp`` class has been extended to include ProSe source Layer
+2 ID and the ProSe Layer-2 Group ID to identify the PDCP/RLC pair to
+be used in the receiving UE. The reason is that in Sidelink, each
+radio bearer is associated with one PDCP entity. And, each PDCP entity
+is associated to one RLC entity, since it uses RLC-UM mode for the
+transmission / reception [TS36323]_. Thus, given the nature of
+Sidelink communication, i.e., one to many, it may happen that multiple
+UEs transmit to a single UE, assigning LCIDs independently. It may
+happen that two UEs select same LCID for the same group. Therefore,
+for a receiving UE to distinguish between two Sidelink Radio bearers
+(SLRBs) with the similar LCIDs requires additional identifiers. An
+enumeration for the Service Data Unit (SDU) type is added in the
+LtePdcpSapUser class to support the differentiation between distinct
+types of packets such as IP, ARP, PC5_SIGNALING, and NON_IP at the RRC
+layer.
 
 RLC
 +++
@@ -469,7 +757,16 @@ The UE MAC is now capable of receiving the RLC buffer status notifications with
 extended Sidelink identifiers, i.e., laye 2 source and destination ids. A tuple
 ``SidelinkLcIdentifier`` of ``LteUeMac`` holds the LCID, SrsL2Id and DstL2Id,
 which is then used as a key for a c++ map storing all the buffer status
-notifications from RLC layer. For "Scheduled" resources, i.e., MODE 1, a UE is
+notifications from RLC layer. 
+
+Before a Sidelink D2D communication transmission on the Physical Sidelink
+Shared Channel (PSSCH) takes place, a Sidelink grant needs to be configured.
+The grant contains information used to configure how, when and where in the
+Sidelink resource pool transmissions will occur.  This information is exchanged
+between communicating parties using the Sidelink Control Information Message
+(SCI) on the Physical Sidelink Control Channel (PSCCH).
+
+For "Scheduled" resources, i.e., MODE 1, a UE is
 now capable of processing the Sidelink DCI (i.e., DCI 5 [TS36212]_) message
 containing the resource allocation information for PSCCH and PSSCH
 transmissions. A UE for transmitting PSCCH uses the PSCCH resource indicated in
@@ -482,24 +779,59 @@ number and the information including in the SL DCI, i.e., Time Resource Pattern
 Index (iTrp), Starting RB index and the total number of RBs to be used. Since
 there are no HARQ feedbacks in Sidelink PSSCH, each transport block is
 transmitted using 4 HARQ transmissions (i.e., RV = 4). Hence, for each grant
-every transport block is transmitted using 4 subframes. On the other hand, for
-the "UeSelected" resource scheduling, i.e., MODE 2, ``LteUeMac`` now have
-following new attributes:
+every transport block is transmitted using 4 subframes. 
 
-* Ktrp
-* SetTrpIndex
-* SlGrantMcs
-* SlGrantSize
 
-Where Ktrp and SetTrpIndex are used to specify the number of active subframes
-and the index of the TRP respectively [TS36213]_. The last two attributes are
-used to specify the MCS and the number of RBs (per subframe) to be used for
-Sidelink transmissions. Different from the "Scheduled" mode, in "UeSelected"
-mode a UE chooses a random PSCCH resource among the available resources and
-similarly transmits twice using two subframes. While for transmitting PSSCH it
-uses a pre-configured pool configuration to determine RBs and subframe for 4
-PSSCH transmissions. Moreover, upon the reception of a PHY PDU the ``LteUeMac``
-class is now able to notify UE RRC to establish a Sidelink radio bearer for the
+On the other hand, for the "UeSelected" resource scheduling, i.e.,
+MODE 2, ``LteUeMac`` chooses a random PSCCH resource among the
+available resources and similarly transmits twice using two
+subframes. While for transmitting PSSCH it uses a pre-configured pool
+configuration to determine RBs and subframe for 4 PSSCH
+transmissions. The ``LteUeMac`` has been enhanced to dynamically configure the
+Modulation and Coding Scheme (MCS), and the number of Physical
+Resource Blocks (PRBs) to be used in the PSSCH of each Sidelink
+period. When there is data to be transmitted over the PSSCH, the
+transmission buffer size and the available number of transmissions per
+PSSCH are used to determine the Transport Block Size (TBS) required
+per Sidelink period. The number of transmission opportunities in the
+PSSCH is configured with the KTRP value. Network operators have the
+option to choose a single KTRP value, or a range from the acceptable
+values, by setting the trpt- subset accordingly in the sidelink pool
+configuration [TS36.213, 14.1.1.3].
+
+A set of configuration metrics are implemented in the LTE UE MAC class; the grant
+scheduling is performed following the configuration (including optimization goal
+when applicable) associated with the metrics to meet the required TBS.
+
+1. Fixed (FIXED): Default setting. Uses grant configuration specified
+by user through the LteUeMac attributes: Ktrp, UseSetTrp, SetTrpIndex,
+SlGrantMcs, and SlGrantSize. Ktrp and SetTrpIndex are used to specify
+the number of active subframes and the index of the TRP respectively
+[TS36213]_. The last two attributes are used to specify the MCS and
+the number of RBs (per subframe) to be used for Sidelink
+transmissions.
+
+2. Random (RANDOM): Selects a grant configuration (MCS, PRBs, KTRP) at random. For
+each enabled KTRP value, keep record of all <PRBs, MCS> pairs satisfying the
+required TBS, choose <PRB, MCS> pair at random.
+
+3. Minimum PRBs Usage (MIN_PRB): Selects a grant configuration that utilizes the
+least number of PRBs per transmission. For each enabled KTRP value, find the <PRB,
+MCS> pair with the fewer number of PRBs satisfying the required TBS and choose the
+<PRB, MCS> pair with fewer PRBs.
+
+4. Maximum Coverage (MAX_COVERAGE): Selects a grant configuration that would
+maximize the communication range. For each enabled KTRP value, keep record of all
+<PRBs, MCS> pairs satisfying the required TBS. Evaluate and rank each pair with
+utility function D = 10 log (PRB) + SNR_threshold (Target BLER at 4th HARQ
+transmission). Choose the <PRB, MCS> pair having the lowest value D.
+
+Use the SlScheduler attribute from the UE MAC to select the scheduling grant metric
+(LteUeMac::FIXED is the default). 
+
+
+Moreover, upon the reception of a PHY PDU the ``LteUeMac`` class is
+now able to notify UE RRC to establish a Sidelink radio bearer for the
 reception.
 
 Sidelink direct discovery
@@ -534,11 +866,11 @@ PHY
 eNB PHY
 -------
 
-The LTE module of |ns3| at the time of writing this documentation does not
-support Radio Link Failure (RLF) functionality. Therefore, to simulate
-out-of-coverage scenarios a workaround has been implemented to disable eNB PHY
-layer. An eNB can be disable by configuring the attribute "DisableEnbPhy" of
-``LteHelper``. Additionally, new
+The LTE D2D module of |ns3| at the time of writing this documentation
+does not support Radio Link Failure (RLF) functionality. Therefore, to
+simulate out-of-coverage scenarios a workaround has been implemented
+to disable eNB PHY layer. An eNB can be disable by configuring the
+attribute "DisableEnbPhy" of ``LteHelper``. Additionally, new
 conditions have been implemented to disregard control messages such as
 Sidelink Control Information SCI, Master Information Block for
 Sidelink MIB_SL, and Sidelink Discovery Message SL_DISC_MSG as these do
@@ -546,18 +878,26 @@ not pertain to uplink control messages to the eNB.
 
 UE PHY
 ------
+
 As shown in Figure :ref:`fig-lte-sl-ue-phy`, to receive the Sidelink
-transmission in the uplink channel the ``LteUePhy`` includes an additional
-``LteSpectrumPhy`` instance. In particular, the function ``DoConfigureUplink``,
-which is called by ``LteUeRrc`` is responsible of adding this new instance to
-the channel. The ``LteUePhy`` class is extensively edited to support all the
-three ProSe services. In particular, the ``LteUePhy`` class has
+transmission in the uplink channel the ``LteUePhy`` includes an
+additional ``LteSpectrumPhy`` instance. In particular, the function
+``DoConfigureUplink``, which is called by ``LteUeRrc`` is responsible
+of adding this new instance to the channel. The ``LteUePhy`` class has
 new functions PhyPscchPduReceived, PhyPsdchPduReceived and
 PhyPsbchPduReceived to respectively receive control, discovery, and
-broadcast PHY PDU respectively. It also has the function
+broadcast PHY PDU respectively. Similarly, ``LteSpectrumPhy`` is
+extended with new function RxSlPscch, RxSlPsdch and RxSlPsbch (and
+corresponding callbacks for interconnecting PHY and MAC) to accomplish
+reception of control, discovery, and broadcast messages
+respectively. It also has the function
 StartRandomInitialSubframeIndication for triggering the
 SubframeIndication method by randomly choosing the frame and subframe
-number.
+number. Additionally, the function SetDownlinkCqiPeriodicity sets the
+periodicty for the downlink periodic wideband (P10) and aperiodic
+subband (A30) CQI reporting. The function InitializeDiscRxPool is used
+to initialize the discovery reception pool taking in appropriate frame
+number and subframe number as parameters.
  
 To differentiate between sending uplink and sidelink MAC PDUs,
 separate functions DoSendMacPdu and DoSendSlMacPdu respectively have
@@ -567,6 +907,10 @@ for the given packet burst. Occasionally, the UE PHY informs the MAC
 through the NotifyUlTransmission function that other transmissions
 with higher priority needs to occur and that the MAC should not
 schedule any sidelink transmissions.
+
+
+The ``LteUePhy`` class is extensively edited to support all the
+three ProSe services.
 
 Sidelink direct communication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -636,7 +980,7 @@ the ``LteUePhy`` class.
  * NSamplesSrsrpMeas
 
 For more information about these attributes the reader is referred to the API of
-``LteUePhy`` class. After the scanning process, only 6 detected SycRefs with the
+``LteUePhy`` class. After the scanning process, only 6 detected SyncRefs with the
 highest S-RSRP are measured during the measurement period. Moreover, if a UE
 receives multiple SLSS from different UEs but have the same SLSS-ID and the
 reception offset, they are considered as different S-RSRP samples of the same

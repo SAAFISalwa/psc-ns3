@@ -676,6 +676,7 @@ LteUeRrc::DoSendData (Ptr<Packet> packet, uint8_t bid)
       params.lcid = it->second->m_logicalChannelIdentity;
       params.dstL2Id = 0; //Only used for Sidelink
       params.srcL2Id = 0; //Only used for Sidelink
+      params.sduType = LtePdcpSapUser::IP_SDU;
 
       NS_LOG_LOGIC (this << " RNTI=" << m_rnti << " sending packet " << packet
                          << " on DRBID " << (uint32_t) drbid
@@ -700,6 +701,7 @@ LteUeRrc::DoSendDataToGroup (Ptr<Packet> packet, uint32_t group)
   params.lcid = slrb->m_logicalChannelIdentity;
   params.dstL2Id = 0; //It is set by PDCP
   params.srcL2Id = 0; //It is set by PDCP
+  params.sduType = LtePdcpSapUser::IP_SDU;
 
   NS_LOG_LOGIC (this << " RNTI=" << m_rnti << " sending packet " << packet
                      << " on SLRBBID " << (uint32_t) group
@@ -708,6 +710,29 @@ LteUeRrc::DoSendDataToGroup (Ptr<Packet> packet, uint32_t group)
   slrb->m_pdcp->GetLtePdcpSapProvider ()->TransmitPdcpSdu (params);
 }
 
+void
+LteUeRrc::SendPc5Signaling (Ptr<Packet> packet, uint32_t destination)
+{
+  NS_LOG_FUNCTION (this << packet << "for sidelink " << destination);
+  //Find the PDCP for sidelink transmission
+  Ptr<LteSidelinkRadioBearerInfo> slrb = m_sidelinkConfiguration->GetSidelinkRadioBearer (destination);
+  //the NAS should be aware about the existence of the bearer or not
+  NS_ASSERT_MSG (slrb, "could not find sidelink bearer for destination == " << destination);
+
+  LtePdcpSapProvider::TransmitPdcpSduParameters params;
+  params.pdcpSdu = packet;
+  params.rnti = m_rnti;
+  params.lcid = slrb->m_logicalChannelIdentity;
+  params.dstL2Id = 0; //It is set by PDCP
+  params.srcL2Id = 0; //It is set by PDCP
+  params.sduType = LtePdcpSapUser::PC5_SIGNALING_SDU;
+
+  NS_LOG_LOGIC (this << " RNTI=" << m_rnti << " sending packet " << packet
+                     << " on SLRBBID " << (uint32_t) destination
+                     << " (LCID " << (uint32_t) params.lcid << ")"
+                     << " (" << packet->GetSize () << " bytes)");
+  slrb->m_pdcp->GetLtePdcpSapProvider ()->TransmitPdcpSdu (params);
+}
 
 void
 LteUeRrc::DoDisconnect ()
@@ -747,7 +772,31 @@ void
 LteUeRrc::DoReceivePdcpSdu (LtePdcpSapUser::ReceivePdcpSduParameters params)
 {
   NS_LOG_FUNCTION (this);
-  m_asSapUser->RecvData (params.pdcpSdu);
+
+  switch (params.sduType)
+    {
+    case LtePdcpSapUser::IP_SDU:
+      //if PC5 user plane data message, send indication to UE RRC SL to update timer
+      if (params.dstL2Id && params.srcL2Id)
+        {
+          m_sidelinkConfiguration->RecvPc5DataMessage (params.srcL2Id, params.dstL2Id, params.pdcpSdu);
+        }
+      m_asSapUser->RecvData (params.pdcpSdu);
+      break;
+    case LtePdcpSapUser::PC5_SIGNALING_SDU:
+      //pass to UE RRC SL entity for processing if it is for this node
+      if (params.dstL2Id == m_sidelinkConfiguration->GetSourceL2Id ())
+        {
+          m_sidelinkConfiguration->RecvPc5SignalingMessage (params.srcL2Id, params.dstL2Id, params.pdcpSdu);
+        }
+      else
+        {
+          NS_LOG_DEBUG ("Dropping PC5 signaling packet for params.dstL2Id (my L2ID=" << m_sidelinkConfiguration->GetSourceL2Id ());
+        }
+      break;
+    default:
+      NS_FATAL_ERROR ("invalid pdcp SDU type " << (uint16_t) params.sduType);
+    }
 }
 
 
@@ -3593,21 +3642,28 @@ LteUeRrc::DoResetSyncIndicationCounter ()
 
 
 void
-LteUeRrc::ActivateSidelinkRadioBearer (uint32_t destination)
+LteUeRrc::ActivateSidelinkRadioBearer (uint32_t destination, bool tx, bool rx)
 {
-  NS_LOG_FUNCTION (this);
-  //procedure to setup the sidelink radio bearer is the same for group or one to one communication
-  DoActivateSidelinkRadioBearer (destination, true, true);
+  NS_LOG_FUNCTION (this << destination << tx << rx);
+  //setup bearer to be able to transmit to the given destination (peer UE)
+  DoActivateSidelinkRadioBearer (destination, tx, rx);
 }
 
 void
 LteUeRrc::DoActivateSidelinkRadioBearer (uint32_t group, bool tx, bool rx)
 {
-  NS_LOG_FUNCTION (this);
+  NS_LOG_FUNCTION (this << group << tx << rx);
 
-  NS_ASSERT_MSG (m_sidelinkConfiguration->GetSidelinkRadioBearer (m_sidelinkConfiguration->m_sourceL2Id, group) == nullptr,
-                 "Sidelink bearer with source L2 id = " << m_sidelinkConfiguration->m_sourceL2Id << " and group id = "
-                                                        << group << " is already established.");
+  //NS_ASSERT_MSG (m_sidelinkConfiguration->GetSidelinkRadioBearer (m_sidelinkConfiguration->m_sourceL2Id, group) == NULL,
+  //                 "Sidelink bearer with source L2 id = "<< m_sidelinkConfiguration->m_sourceL2Id << " and group id = "
+  //                 << group <<" is already established.");
+  if (m_sidelinkConfiguration->GetSidelinkRadioBearer (m_sidelinkConfiguration->m_sourceL2Id, group) != NULL)
+    {
+      NS_LOG_INFO ("Sidelink bearer with source L2 id = " << m_sidelinkConfiguration->m_sourceL2Id << " and group id = "
+                                                          << group << " is already established.");
+      m_asSapUser->NotifySidelinkRadioBearerActivated (group);
+      return;
+    }
 
   switch (m_state)
     {
@@ -3680,6 +3736,7 @@ LteUeRrc::DoActivateSidelinkRadioBearer (uint32_t group, bool tx, bool rx)
         }
       //for testing, just indicate it is ok
       m_asSapUser->NotifySidelinkRadioBearerActivated (group);
+      m_sidelinkConfiguration->NotifySidelinkRadioBearerActivated (group);
       break;
 
     case IDLE_WAIT_SIB2:
@@ -4155,6 +4212,7 @@ LteUeRrc::ApplySidelinkDedicatedConfiguration (LteRrcSap::SlCommConfig config)
       for (std::list <uint32_t>::iterator it = destinations.begin (); it != destinations.end (); it++)
         {
           m_asSapUser->NotifySidelinkRadioBearerActivated (*it);
+          m_sidelinkConfiguration->NotifySidelinkRadioBearerActivated (*it);
         }
     }
   else
@@ -4281,7 +4339,7 @@ LteUeRrc::ApplySidelinkDedicatedConfiguration (LteRrcSap::SlDiscConfig config)
 void
 LteUeRrc::SendSidelinkUeInformation (bool txComm, bool rxComm, bool txDisc, bool rxDisc)
 {
-  NS_LOG_FUNCTION (this);
+  NS_LOG_FUNCTION (this << txComm << rxComm << txDisc << rxDisc);
 
   LteRrcSap::SidelinkUeInformation sidelinkUeInformation;
   sidelinkUeInformation.haveCommRxInterestedFreq = false;
@@ -4366,24 +4424,33 @@ void LteUeRrc::DoNotifyDiscoveryReception (Ptr<Packet> p)
   p->RemoveHeader (discHeader);
 
   uint8_t msgType = discHeader.GetDiscoveryMsgType ();
-  if (msgType == LteSlDiscHeader::DISC_OPEN_ANNOUNCEMENT || msgType == LteSlDiscHeader::DISC_RESTRICTED_ANNOUNCEMENT)
+  if (msgType == LteSlDiscHeader::DISC_OPEN_ANNOUNCEMENT || msgType == LteSlDiscHeader::DISC_RESTRICTED_QUERY || msgType == LteSlDiscHeader::DISC_RESTRICTED_RESPONSE)
     { //open or restricted announcement
-      if (m_sidelinkConfiguration->IsMonitoringApp (discHeader.GetApplicationCode ()))
+      if (m_sidelinkConfiguration->IsMonitoringApp (msgType, discHeader.GetApplicationCode ()))
         {
           NS_LOG_INFO ("discovery message received by " << m_rnti);
           m_discoveryMonitoringTrace (m_imsi, m_cellId, m_rnti, discHeader);
+          m_sidelinkConfiguration->RecvApplicationServiceDiscovery (msgType, discHeader.GetApplicationCode ());
         }
     }
-  else if (msgType == LteSlDiscHeader::DISC_RELAY_ANNOUNCEMENT)
+  else if (msgType == LteSlDiscHeader::DISC_RELAY_ANNOUNCEMENT || msgType == LteSlDiscHeader::DISC_RELAY_RESPONSE)
     {
-      if (m_sidelinkConfiguration->IsMonitoringRelayServiceCode (discHeader.GetRelayServiceCode ()))
+      if (m_sidelinkConfiguration->IsMonitoringRelayServiceCode (msgType, discHeader.GetRelayServiceCode ()))
         {
           NS_LOG_INFO ("Relay announcement message received by " << m_rnti);
           m_discoveryMonitoringTrace (m_imsi, m_cellId, m_rnti, discHeader);
           m_sidelinkConfiguration->RecvRelayServiceDiscovery (discHeader.GetRelayServiceCode (), discHeader.GetInfo (), discHeader.GetRelayUeId (), discHeader.GetStatusIndicator ());
         }
     }
-  //todo: expand to cover all cases
+  else if (msgType == LteSlDiscHeader::DISC_RELAY_SOLICITATION)
+    {
+      if (m_sidelinkConfiguration->IsMonitoringRelayServiceCode (msgType, discHeader.GetRelayServiceCode ()))
+        {
+          NS_LOG_INFO ("Relay request message received by " << m_rnti);
+          m_discoveryMonitoringTrace (m_imsi, m_cellId, m_rnti, discHeader);
+          m_sidelinkConfiguration->RecvRelayServiceDiscovery (discHeader.GetRelayServiceCode (), discHeader.GetInfo (), discHeader.GetURDSComposition (), discHeader.GetRelayUeId ());
+        }
+    }
 }
 
 void

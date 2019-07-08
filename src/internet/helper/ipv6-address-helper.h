@@ -166,6 +166,14 @@ public:
    * \return newly created Ipv6InterfaceContainer
    */
   Ipv6InterfaceContainer AssignWithoutAddress (const NetDeviceContainer &c);
+  
+  /**
+   * \brief Allocate an Ipv6InterfaceContainer with manually assigned addresses.
+   * \param c netdevice container
+   * \param addresses a vector of Ipv6Address values which is manually assigned to the respective netdevices
+   * \return newly created Ipv6InterfaceContainer
+   */
+  Ipv6InterfaceContainer AssignManualAddress (const NetDeviceContainer &c, std::vector<Ipv6Address> addresses);
 
 private:
   Ipv6Address m_network; //!< network address

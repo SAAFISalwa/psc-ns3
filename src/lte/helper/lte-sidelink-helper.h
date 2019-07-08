@@ -43,6 +43,8 @@
 #include <ns3/lte-spectrum-value-helper.h>
 #include <ns3/lte-3gpp-hex-grid-enb-topology-helper.h>
 #include <ns3/sidelink-rsrp-calculator.h>
+#include <ns3/ipv6-address-helper.h>
+#include <map>
 
 namespace ns3 {
 
@@ -68,10 +70,40 @@ public:
     SLRSRP_PSBCH                        ///< S-RSRP (Sidelink RSRP) calculation method defined in TS 36.214
   };
 
+  /**
+   * Structure to be used as key to IPv6 address configurations of one-to-one sidelink link
+   */
+  struct LteSlO2OIpv6AddressKey
+  {
+    uint32_t relayL2Id; ///< Relay UE layer 2 ID
+    uint32_t remoteL2Id; ///< Remote UE layer 2 ID
+  };
+
+  /**
+   * Structure to be used as value to IPv6 address configurations of one-to-one sidelink link
+   */
+  struct LteSlO2OIpv6AddressValue
+  {
+    Ipv6AddressHelper ipv6ah; ///< IPv6 address helper used to assign addresses
+    Ipv6Address relay_address = Ipv6Address::GetOnes(); ///< Address assigned for relay UE (or all 1s if not initialized)
+    Ipv6Address remote_address = Ipv6Address::GetOnes(); ///< Address assigned for remote UE (or all 1s if not initialized)
+  };
+
+  /**
+   * Less than operator
+   *
+   * \param l first SidelinkLcIdentifier
+   * \param r second SidelinkLcIdentifier
+   * \returns true if first SidelinkLcIdentifier parameter values are less than the second SidelinkLcIdentifier parameters"
+   */
+  friend bool operator < (const LteSlO2OIpv6AddressKey &l, const LteSlO2OIpv6AddressKey &r)
+  {
+    return (l.relayL2Id < r.relayL2Id) || (l.relayL2Id == r.relayL2Id && l.remoteL2Id < r.remoteL2Id);
+  }
+
   LteSidelinkHelper (void);
   virtual ~LteSidelinkHelper (void);
 
-  // inherited from Object
   /**
    *  Register this type.
    *  \return The object TypeId.
@@ -226,9 +258,73 @@ public:
    */
   int64_t AssignStreams (int64_t stream);
 
+  /**
+   * Sets the prefix for assigning IPv6 addresses for UE-to-Network relay
+   * The prefix length needs to be less that 64 bits
+   * \param prefix The prefix to use
+   * \param network The network address
+   */
+  void SetIpv6BaseForRelayCommunication (Ipv6Address network, Ipv6Prefix prefix);
+
+  /**
+   * Assign and return an IPv6 address for relay communication
+   * The function is expected to be called by each node (relay and remote)
+   * \param dev The pointer to the NetDevice
+   * \param relayL2Id The relay L2 ID
+   * \param remoteL2Id The remote L2 ID
+   * \param role The role (RelayUE or Remote UE)
+   * \return The container with interface information
+   */
+  Ipv6InterfaceContainer AssignIpv6AddressForRelayCommunication (Ptr<NetDevice> dev, uint32_t relayL2Id, uint32_t remoteL2Id, LteSlUeRrc::RelayRole role);
+
+  /**
+   * Returns the Relay UE IPv6 address after searching in the m_ipv6AddressHelperMap
+   * If not found, return all zero IPv6 address
+   * \param relayL2Id The relay L2 ID
+   * \param remoteL2Id The remote L2 ID
+   * \param role The role (RelayUE or Remote UE)
+   *
+   * \return The Relay IPv6 address
+   */
+  Ipv6Address GetRelayIpv6AddressFromMap (uint32_t relayL2Id, uint32_t remoteL2Id, LteSlUeRrc::RelayRole role);
+  
+  /**
+   * Returns the self IPv6 address after searching in the m_ipv6AddressHelperMap
+   * If not found, return all zero IPv6 address
+   * \param relayL2Id The relay L2 ID
+   * \param remoteL2Id The remote L2 ID
+   * \param role The role (RelayUE or Remote UE)
+   *
+   * \return The self IPv6 address
+   */
+  Ipv6Address GetSelfIpv6AddressFromMap (uint32_t relayL2Id, uint32_t remoteL2Id, LteSlUeRrc::RelayRole role);
+
+  /**
+   * Informs the PGW/SGW of a new Remote UE connected to a relay UE
+   *
+   * \param relayImsi The IMSI of the relay node
+   * \param ueImsi The IMSI of the remote UE
+   * \param ipv6Prefix The /64 prefix assigned to the remote UE
+   */
+  void RemoteUeContextConnected (uint64_t relayImsi, uint64_t ueImsi, uint8_t ipv6Prefix[8]);
+
+  /**
+   * Informs the PGW/SGW of a new Remote UE connected to a relay UE
+   *
+   * \param relayImsi The IMSI of the relay node
+   * \param ueImsi The IMSI of the remote UE
+   * \param ipv6Prefix The /64 prefix that was assigned to the remote UE
+   */
+  void RemoteUeContextDisconnected (uint64_t relayImsi, uint64_t ueImsi, uint8_t ipv6Prefix[8]);
+
 private:
-  Ptr<LteHelper> m_lteHelper; ///< Pointer to the LteHelper
+  Ptr<LteHelper> m_lteHelper; ///< Provides access to LTE helper
   Ptr<UniformRandomVariable> m_uniformRandomVariable; ///< Provides uniform random variables
+
+  Ipv6AddressHelper m_relayIpv6ah; ///< Address helper for assigning addresses for UE relay operations
+  Ipv6Prefix m_ipv6AddressRelayPrefix; ///< Prefix from which addresses are assigned for UE relay operations
+  Ipv6Address m_ipv6AddressRelayNetwork; ///< Base network to assign IPv6 address helper
+  std::map <LteSlO2OIpv6AddressKey, LteSlO2OIpv6AddressValue> m_ipv6AddressValueMap; ///< Provides mapping between pairs of L2 addresses and IPv6 address helper, IPv6 addresses and required booleans
 };
 
 

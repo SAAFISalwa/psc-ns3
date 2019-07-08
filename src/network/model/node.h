@@ -103,6 +103,12 @@ public:
    */
   uint32_t AddDevice (Ptr<NetDevice> device);
   /**
+   * \brief Disassociate a NetDevice from this node.
+   *
+   * \param device NetDevice to disassociate from this node.
+   */
+  void RemoveDevice (Ptr<NetDevice> device);
+  /**
    * \brief Retrieve the index-th NetDevice associated to this node.
    *
    * \param index the index of the requested NetDevice

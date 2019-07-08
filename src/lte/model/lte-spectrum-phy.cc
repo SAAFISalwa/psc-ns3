@@ -1867,8 +1867,6 @@ LteSpectrumPhy::EndRxData ()
   m_expectedTbs.clear ();
 }
 
-
-
 void
 LteSpectrumPhy::EndRxSlFrame ()
 {

@@ -774,7 +774,6 @@ private:
   */
   std::list <LteUePhySapProvider::TransmitSlPhySduParameters> GetSlPhyParameters (Ptr<PacketBurst> pb);
 
-
   /// A list of sub channels to use in TX.
   std::vector <int> m_subChannelsForTransmission;
   /// A list of sub channels to use in RX.
@@ -958,7 +957,9 @@ private:
 
   uint16_t m_numOfQoutEvalSf; ///< the downlink radio link quality is estimated over this period for detecting out-of-syncs
   uint16_t m_numOfQinEvalSf; ///< the downlink radio link quality is estimated over this period for detecting in-syncs
+  
   /**
+   * Attribute to control initial synchronization
    * If true the values of frameNo and subframeNo are selected randomly,
    * if false, frameNo=1 and subframeNo=1
    */

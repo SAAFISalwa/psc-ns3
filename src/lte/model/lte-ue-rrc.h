@@ -426,6 +426,7 @@ public:
    * \return slssid
    */
   uint64_t GetSlssid ();
+  
   /**
   * Starts discovery process for given applications depending on the interest (monitoring or announcing)
   * \param appCodes app code payloads to be removed
@@ -491,12 +492,21 @@ public:
    * \param discHeader The discovery message
    */
   void TransmitDiscoveryMessage (LteSlDiscHeader discHeader);
+  
+  /**
+   * Sends a PC5 signaling message
+   * \param packet The packet to send
+   * \param destination The layer 2 ID
+   */ 
+  void SendPc5Signaling (Ptr<Packet> packet, uint32_t destination);
 
   /**
    * Method called to activate a sidelink radio bearer for one to one communication
    * \param destination The layer 2 ID
+   * \param tx True if the bearer is for transmission
+   * \param rx True if the bearer is for reception
    */
-  void ActivateSidelinkRadioBearer (uint32_t destination);
+  void ActivateSidelinkRadioBearer (uint32_t destination, bool tx, bool rx);
 
 
 private:

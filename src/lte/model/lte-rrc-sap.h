@@ -1187,6 +1187,18 @@ public:
     PeriodicBsrTimer periodicBsrTimer; ///< Timer for BSR reporting
     RetxBsrTimer retxBsrTimer; ///< Timer for retransmitting BSR
   };
+  
+  /**
+    * Comparison operator
+    *
+    * \param lhs first configuration
+    * \param rhs second configuration
+    * \returns true if the pools are equal"
+    */
+    friend bool operator==(const SlMacMainConfigSl& lhs, const SlMacMainConfigSl& rhs)
+    {
+      return lhs.periodicBsrTimer.period == rhs.periodicBsrTimer.period && lhs.retxBsrTimer.period == rhs.retxBsrTimer.period;
+    }
 
   /// SlCommTxPoolToAddMod structure
   struct SlCommTxPoolToAddMod

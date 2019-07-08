@@ -154,6 +154,13 @@ public:
    */
   LteRrcSap::SystemInformationBlockType19 GetSystemInformationType19 ();
 
+  /**
+   * Utility function to preconfigure a default Sl communication pool for UEs
+   *
+   * \param pool The pool information
+   */
+  void SetDefaultPool (LteRrcSap::SlCommTxResourcesSetup pool);
+
 private:
   /**
    * Is pool in list function
@@ -197,6 +204,15 @@ private:
   };
 
   std::map <uint32_t, LteSlEnbRrc::ActivePoolInfo> m_activePoolMap;   ///< Map of Active pools
+
+  /// Default Sidelink communication pool structure
+  struct DefaultPoolInfo
+  {
+	  bool m_isSet; ///< Indicates if the default pool has been configured
+	  LteRrcSap::SlCommTxResourcesSetup m_poolSetup; ///< Default pool configuration
+  };
+
+  LteSlEnbRrc::DefaultPoolInfo m_defaultPoolInfo; ///< Default Sidelink communication pool
 
 };   //end of 'class LteSlEnbRrc
 

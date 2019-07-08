@@ -153,6 +153,12 @@ def build(bld):
         'model/lte-sl-ue-rrc.cc',
         'model/lte-sl-tft.cc',
         'model/lte-sl-header.cc',
+        'model/lte-sl-pdcp-header.cc',
+        'model/lte-sl-pc5-signalling-header.cc',
+        'model/lte-sl-o2o-comm-params.cc',
+        'model/lte-sl-ue-controller.cc',
+        'model/lte-sl-basic-ue-controller.cc',
+        'model/lte-sl-ue-net-device.cc',
         'model/lte-sl-tag.cc',
         ]
 
@@ -222,6 +228,21 @@ def build(bld):
         'test/test-sidelink-in-coverage-comm.cc',
         'test/test-sidelink-out-of-coverage-comm.cc',
         'test/test-wrap-around-hex-topology.cc',
+        'test/test-lte-pc5-signalling-header.cc',
+        'test/test-sl-in-covrg-1relay-1remote-regular.cc',
+        'test/test-sl-in-covrg-1relay-1remote-keepalive.cc',
+        'test/test-sl-in-covrg-1relay-1remote-disconnect-remote.cc',
+        'test/test-sl-in-covrg-1relay-1remote-disconnect-relay.cc',
+        'test/test-sl-in-covrg-1relay-1remote-reconnect-remote.cc',
+        'test/test-sl-in-covrg-1relay-1remote-reconnect-relay.cc',
+        'test/test-sl-in-covrg-1relay-2remote-regular.cc',
+        'test/test-sl-in-covrg-2relay-1remote-regular.cc',
+        'test/test-sl-in-covrg-2relay-1remote-disconnect-relay.cc',
+        'test/test-sl-ooc-1relay-1remote-regular.cc',
+        'test/test-sl-ooc-1relay-1remote-misaligned.cc',
+        'test/test-sl-in-covrg-discovery-regular.cc',
+        'test/test-sl-in-covrg-discovery-multi-app.cc',
+        'test/test-sl-in-covrg-discovery-1relay-1remote.cc',
         'test/test-sidelink-synch.cc'
         ]
 
@@ -374,6 +395,12 @@ def build(bld):
         'model/lte-sl-ue-rrc.h',
         'model/lte-sl-tft.h',
         'model/lte-sl-header.h',
+        'model/lte-sl-pdcp-header.h',
+        'model/lte-sl-pc5-signalling-header.h',
+        'model/lte-sl-o2o-comm-params.h',
+        'model/lte-sl-ue-controller.h',
+        'model/lte-sl-basic-ue-controller.h',
+        'model/lte-sl-ue-net-device.h',
         'model/lte-sl-tag.h',
         ]
 

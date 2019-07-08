@@ -495,4 +495,104 @@ CheckSfnAlignment method in the test. ::
 
 
 Finally, the test would pass if the synchronizing UE has a similar frame and
-subframe number as its SyncRef UE.
+
+In-coverage Relay communication
+-------------------------------
+
+The test suite ``sl-in-covrg-1relay-1remote-regular`` is a system test
+to test the in-coverage sidelink communication scenario between a
+Relay UE and a Remote UE. The test uses as parameters the simulation
+time, number of packets for the echo client application, the interval
+between packets for the echo client application and the packet size
+for the echo client application. The echo client is installed on the
+Remote UE and the echo server is installed on a remote host machine on
+the network. After the successful setup of the one-to-one
+communication state machine, the packets are expected to flow from the
+Remote UE to the Relay UE and packet gateway and ultimately end up at
+the remote host, which echoes the packets back on the same route. The
+test is considered to have passed if both the UEs reach the right
+state by transmitting the ‘Remote UE Info Request’ and ‘Remote UE Info
+Response’ messages between each other and if at least one packet has
+been echoed between the Remote UE and the remote host.
+
+The test suite ``sl-in-covrg-1relay-1remote-keepalive`` modifies the
+timers associated with the one-to-one communication state machine to
+force the Relay UE and the Remote UE to transmit ‘Direct Communication
+Keepalive’ and ‘Direct Communication Keepalive Acknowledgement’
+messages between each other. The test is considered to have passed if
+both the UEs keep the link alive by receiving the respective keepalive
+messages.
+
+The test suites ``sl-in-covrg-1relay-1remote-disconnect-remote`` and
+``sl-in-covrg-1relay-1remote-disconnect-relay`` forces the Remote UE
+and the Relay UE respectively to relinquish the established one-to-one
+communication link. The tests are considered to have passed if the
+appropriate UE sends the ‘Direct Communication Release’ message and
+the other UE responds with the ‘Direct Communication Release Accept’
+message.
+
+The test suites ``sl-in-covrg-1relay-1remote-reconnect-remote`` and
+``sl-in-covrg-1relay-1remote-reconnect-relay`` forces the Remote UE
+and the Relay UE respectively to relinquish the established one-to-one
+communication link and reestablish it again later in the
+simulation. Since the UEs are in coverage of the network, once the
+sidelink path for the packets between the UEs is removed, the Remote
+UE uses the uplink path to send the packets to the remote host
+machine. The tests are considered to have passed if the packets
+inspected at the remote host have appropriate source IP addresses at
+specific times in the scenario.
+
+The test suite ``sl-in-covrg-1relay-2remote-regular`` is a system test
+to test the in-coverage sidelink communication scenario between a
+Relay UE and two Remote UEs. Each Remote UE sends certain number of
+packets to the remote host and receives the echoes of the packets from
+the remote host. The test is considered to have passed if the
+collective number of packets sent from the Remote UEs is equal to the
+collective number of packets received at the Remote UEs.
+
+The test suite ``sl-in-covrg-2relay-1remote-regular`` is a system test
+to test the in-coverage sidelink communication scenario between two
+Relay UEs and a Remote UE. The remote host can receive packets
+originating from the Remote UE through either Relay UEs. To ensure the
+packets have taken both paths through each Relay UE, the source
+address of the packets received at the remote host are inspected for
+two different IP addresses. The test is considered to have passed if
+the number of packets received at the remote host is equal to the
+number of packets sent from the remote host and the received packets
+at the remote host are from two different source IP addresses.
+
+The test suite ``sl-in-covrg-2relay-1remote-disconnect-relay`` builds
+on the ``sl-in-covrg-2relay-1remote-regular`` by disconnecting the
+Relay UEs one by one.  Once the first Relay UE is disconnected, the
+Remote UE is forced to use the second Relay UE. Once the second Relay
+UE is also disconnected, the Remote UE is forced to use its
+uplink. The test is considered to have passed if the received packets
+at the remote host are from three different source IP addresses,
+namely Remote UE uplink IP address, Remote UE IP address under first
+Relay UE and Remote UE IP address under second Relay UE.
+
+Out of coverage Relay communication
+-----------------------------------
+
+The test suite ``sl-ooc-1relay-1remote-regular`` adds to the
+``sl-in-covrg-1relay-1remote-regular`` test suite by having the
+necessary preconfiguration in the Remote UE to help the UEs operate
+out of network coverage. The out-of-coverage and in-coverage scenarios
+are similar in input parameters and the passing conditions for the
+individual test cases. The test suite
+``sl-ooc-1relay-1remote-misaligned`` is a special case of the test
+suite ``sl-ooc-1relay-1remote-regular`` where the preconfiguration
+parameters can be modified for the Remote UE. The comments provided in
+the test suite tabulate the modifications that can be made to the
+variables and the responses that can be expected from running the test
+suite.
+
+In-coverage Relay discovery
+--------------------------- 
+
+The test suite ``sl-in-covrg-discovery-1relay-1remote`` modifies
+``sl-in-covrg-1relay-1remote-regular`` by making one UE the Relay UE
+and the other UE the Remote UE. The passing condition for the single
+test case in ``sl-in-covrg-discovery-1relay-1remote`` is that in both
+Model A and Model B discovery modes, the Remote UE can successfully
+discover the relay service code broadcasted by the Relay UE.
