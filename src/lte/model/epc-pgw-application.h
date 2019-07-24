@@ -17,6 +17,7 @@
  *
  * Author: Manuel Requena <manuel.requena@cttc.es>
  *         (based on epc-sgw-pgw-application.h)
+ * Modified by: NIST // Contributions may not be subject to US copyright.
  */
 
 #ifndef EPC_PGW_APPLICATION_H

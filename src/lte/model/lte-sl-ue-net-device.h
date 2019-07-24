@@ -1,53 +1,48 @@
-/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2010 TELEMATICS LAB, DEE - Politecnico di Bari
+ * NIST-developed software is provided by NIST as a public
+ * service. You may use, copy and distribute copies of the software in
+ * any medium, provided that you keep intact this entire notice. You
+ * may improve, modify and create derivative works of the software or
+ * any portion of the software, and you may copy and distribute such
+ * modifications or works. Modified works should carry a notice
+ * stating that you changed the software and should note the date and
+ * nature of any such change. Please explicitly acknowledge the
+ * National Institute of Standards and Technology as the source of the
+ * software.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation;
+ * NIST-developed software is expressly provided "AS IS." NIST MAKES
+ * NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED, IN FACT OR ARISING BY
+ * OPERATION OF LAW, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+ * WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
+ * NON-INFRINGEMENT AND DATA ACCURACY. NIST NEITHER REPRESENTS NOR
+ * WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED
+ * OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES NOT
+ * WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE
+ * SOFTWARE OR THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE
+ * CORRECTNESS, ACCURACY, RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * Author: Giuseppe Piro  <g.piro@poliba.it>
- *         Nicola Baldo <nbaldo@cttc.es>
- * Modified by:
- *          Danilo Abrignani <danilo.abrignani@unibo.it> (Carrier Aggregation - GSoC 2015)
- *          Biljana Bojovic <biljana.bojovic@cttc.es> (Carrier Aggregation)
+ * You are solely responsible for determining the appropriateness of
+ * using and distributing the software and you assume all risks
+ * associated with its use, including but not limited to the risks and
+ * costs of program errors, compliance with applicable laws, damage to
+ * or loss of data, programs or equipment, and the unavailability or
+ * interruption of operation. This software is not intended to be used
+ * in any situation where a failure could cause risk of injury or
+ * damage to property. The software developed by NIST employees is not
+ * subject to copyright protection within the United States.
  */
 
 #ifndef LTE_SL_UE_NET_DEVICE_H
 #define LTE_SL_UE_NET_DEVICE_H
 
 #include "ns3/lte-net-device.h"
-#include "ns3/event-id.h"
 #include "ns3/traced-callback.h"
-#include "ns3/nstime.h"
-#include "ns3/lte-phy.h"
-#include "ns3/eps-bearer.h"
-#include "ns3/component-carrier-ue.h"
-#include <vector>
-#include <map>
 
 namespace ns3 {
 
 class Packet;
-class PacketBurst;
-class Node;
-class LtePhy;
-class LteUePhy;
-class LteEnbNetDevice;
-class LteUeMac;
-class LteUeRrc;
 class EpcUeNas;
-class EpcTft;
-class LteUeComponentCarrierManager;
 
 /**
  * \ingroup lte

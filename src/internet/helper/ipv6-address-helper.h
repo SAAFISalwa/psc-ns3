@@ -17,6 +17,7 @@
  *
  * Author: Sebastien Vincent <vincent@clarinet.u-strasbg.fr>
  * modified by Tom Henderson for ns-3.14 release
+ * Modified by: NIST // Contributions may not be subject to US copyright. 
  */
 
 #ifndef IPV6_ADDRESS_HELPER_H

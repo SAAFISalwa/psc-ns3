@@ -58,22 +58,22 @@ UePacketTrace (Ptr<OutputStreamWrapper> stream, const Ipv6Address &localAddrs, s
     {
       oss << Inet6SocketAddress::ConvertFrom (srcAddrs).GetIpv6 ();
       if (!oss.str ().compare ("::")) //srcAddrs not set
-        {
-          *stream->GetStream () << localAddrs << ":" << Inet6SocketAddress::ConvertFrom (srcAddrs).GetPort () << "\t" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetPort () << std::endl;
-        }
+	{
+	  *stream->GetStream () << localAddrs << ":" << Inet6SocketAddress::ConvertFrom (srcAddrs).GetPort () << "\t" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetPort () << std::endl;
+	}
       else
-        {
-          oss.str ("");
-          oss << Inet6SocketAddress::ConvertFrom (dstAddrs).GetIpv6 ();
-          if (!oss.str ().compare ("::")) //dstAddrs not set
-            {
-              *stream->GetStream () << Inet6SocketAddress::ConvertFrom (srcAddrs).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (srcAddrs).GetPort () << "\t" << localAddrs << ":" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetPort () << std::endl;
-            }
-          else
-            {
-              *stream->GetStream () << Inet6SocketAddress::ConvertFrom (srcAddrs).GetIpv6 () << ":" << InetSocketAddress::ConvertFrom (srcAddrs).GetPort () << "\t" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetPort () << std::endl;
-            }
-        }
+	{
+	  oss.str ("");
+	  oss << Inet6SocketAddress::ConvertFrom (dstAddrs).GetIpv6 ();
+	  if (!oss.str ().compare ("::")) //dstAddrs not set
+	    {
+	      *stream->GetStream () << Inet6SocketAddress::ConvertFrom (srcAddrs).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (srcAddrs).GetPort () << "\t" << localAddrs << ":" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetPort () << std::endl;
+	    }
+	  else
+	    {
+	      *stream->GetStream () << Inet6SocketAddress::ConvertFrom (srcAddrs).GetIpv6 () << ":" << InetSocketAddress::ConvertFrom (srcAddrs).GetPort () << "\t" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetPort () << std::endl;
+	    }
+	}
     }
   else
     {
@@ -90,10 +90,11 @@ UePacketTrace (Ptr<OutputStreamWrapper> stream, const Ipv6Address &localAddrs, s
  *    eNB (0.0, 0.0, 30.0).....(500 m).....UE2/RemoteUE (20.0, 0.0, 1.5)
  *                        .....(300 m).....UE1/RelayUE (10.0, 0.0, 1.5)
  *
- * Both UEs are in coverage
+ * The Remote UE is out-of-coverage when the scenario is configured to use the
+ * UE-to-Network relay, i.e., when useRelay = true
  */
 
-NS_LOG_COMPONENT_DEFINE ("wns3-2019-relay");
+NS_LOG_COMPONENT_DEFINE ("lte-sl-relay-remote-ooc");
 
 
 int main (int argc, char *argv[])
@@ -248,6 +249,9 @@ int main (int argc, char *argv[])
   enbSidelinkConfiguration->AddPreconfiguredDedicatedPool (1, pool); //update to use L2ID for remote UE
   enbSidelinkConfiguration->AddPreconfiguredDedicatedPool (2, pool); //update to use L2ID for remote UE
 
+  //Configure default communication pool
+  enbSidelinkConfiguration->SetDefaultPool (pool);
+
   //Configure discovery pool
   enbSidelinkConfiguration->SetDiscEnabled (true);
 
@@ -280,13 +284,62 @@ int main (int argc, char *argv[])
   //Configure Sidelink Preconfiguration for the UEs
   Ptr<LteSlUeRrc> ueSidelinkConfiguration = CreateObject<LteSlUeRrc> ();
   ueSidelinkConfiguration->SetSlEnabled (true);
-  LteRrcSap::SlPreconfiguration preconfiguration;
-  ueSidelinkConfiguration->SetSlPreconfiguration (preconfiguration);
+  LteRrcSap::SlPreconfiguration preconfigurationRemote;
+  LteRrcSap::SlPreconfiguration preconfigurationRelay;
+
+  if(useRelay)
+    {
+      //General
+      preconfigurationRemote.preconfigGeneral.carrierFreq = 23330;
+      preconfigurationRemote.preconfigGeneral.slBandwidth = 50;
+
+      //Discovery
+      preconfigurationRemote.preconfigDisc.nbPools = 1;
+      LteSlDiscPreconfigPoolFactory preconfDiscPoolFactory;
+      preconfDiscPoolFactory.SetDiscCpLen ("NORMAL");
+      preconfDiscPoolFactory.SetDiscPeriod ("rf32");
+      preconfDiscPoolFactory.SetNumRetx (0);
+      preconfDiscPoolFactory.SetNumRepetition (1);
+      preconfDiscPoolFactory.SetDiscPrbNum (10);
+      preconfDiscPoolFactory.SetDiscPrbStart (10);
+      preconfDiscPoolFactory.SetDiscPrbEnd (40);
+      preconfDiscPoolFactory.SetDiscOffset (0);
+      preconfDiscPoolFactory.SetDiscBitmap (0x11111);
+      preconfDiscPoolFactory.SetDiscTxProbability ("p100");
+
+      preconfigurationRemote.preconfigDisc.pools[0] = preconfDiscPoolFactory.CreatePool ();
+
+      //Communication
+      preconfigurationRemote.preconfigComm.nbPools = 1;
+      LteSlPreconfigPoolFactory preconfCommPoolFactory;
+      //-Control
+      preconfCommPoolFactory.SetControlPeriod ("sf40");
+      preconfCommPoolFactory.SetControlBitmap (0x00000000FF); //8 subframes for PSCCH
+      preconfCommPoolFactory.SetControlOffset (0);
+      preconfCommPoolFactory.SetControlPrbNum (22);
+      preconfCommPoolFactory.SetControlPrbStart (0);
+      preconfCommPoolFactory.SetControlPrbEnd (49);
+      //-Data
+      preconfCommPoolFactory.SetDataBitmap (0xFFFFFFFFFF);
+      preconfCommPoolFactory.SetDataOffset (8); //After 8 subframes of PSCCH
+      preconfCommPoolFactory.SetDataPrbNum (25);
+      preconfCommPoolFactory.SetDataPrbStart (0);
+      preconfCommPoolFactory.SetDataPrbEnd (49);
+
+      preconfigurationRemote.preconfigComm.pools[0] = preconfCommPoolFactory.CreatePool ();
+  }
+
   ueSidelinkConfiguration->SetDiscEnabled (true);
   uint8_t nb = 3;
   ueSidelinkConfiguration->SetDiscTxResources (nb);
   ueSidelinkConfiguration->SetDiscInterFreq (enbDevs.Get (0)->GetObject<LteEnbNetDevice> ()->GetUlEarfcn ());
-  lteHelper->InstallSidelinkConfiguration (ueDevs, ueSidelinkConfiguration);
+
+  ueSidelinkConfiguration->SetSlPreconfiguration (preconfigurationRelay);
+  lteHelper->InstallSidelinkConfiguration (ueDevs.Get(0), ueSidelinkConfiguration);
+
+  ueSidelinkConfiguration->SetSlPreconfiguration (preconfigurationRemote);
+  lteHelper->InstallSidelinkConfiguration (ueDevs.Get(1), ueSidelinkConfiguration);
+
 
   //Install the IP stack on the UEs and assign IP address
   internet.Install (ueNodes);
@@ -318,8 +371,13 @@ int main (int argc, char *argv[])
   Ptr<Ipv6StaticRouting> pgwStaticRouting = ipv6RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv6> ());
   pgwStaticRouting->AddNetworkRouteTo ("7777:f00e::", Ipv6Prefix (64), Ipv6Address ("7777:f00e::1"), 1, 0);
 
-  //Attach each UE to the best available eNB
-  lteHelper->Attach (ueDevs);
+  //Attach the relay UE to the eNodeB
+  lteHelper->Attach (ueDevs.Get(0));
+  //If not using relay, attach the remote to the eNodeB as well
+  if (!useRelay)
+    {
+      lteHelper->Attach (ueDevs.Get(1));
+    }
 
   ///*** Configure applications ***///
   AsciiTraceHelper ascii;

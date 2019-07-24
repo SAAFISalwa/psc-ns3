@@ -17,6 +17,7 @@
  *
  * Author: Manuel Requena <manuel.requena@cttc.es>
  *         (based on epc-sgw-pgw-application.cc)
+ * Modified by: NIST // Contributions may not be subject to US copyright.
  */
 
 #include "ns3/log.h"

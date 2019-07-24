@@ -1,5 +1,39 @@
 #!/bin/bash
 
+ #/* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
+ #
+ # NIST-developed software is provided by NIST as a public
+ # service. You may use, copy and distribute copies of the software in
+ # any medium, provided that you keep intact this entire notice. You
+ # may improve, modify and create derivative works of the software or
+ # any portion of the software, and you may copy and distribute such
+ # modifications or works. Modified works should carry a notice
+ # stating that you changed the software and should note the date and
+ # nature of any such change. Please explicitly acknowledge the
+ # National Institute of Standards and Technology as the source of the
+ # software.
+ #
+ # NIST-developed software is expressly provided "AS IS." NIST MAKES
+ # NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED, IN FACT OR ARISING BY
+ # OPERATION OF LAW, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+ # WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
+ # NON-INFRINGEMENT AND DATA ACCURACY. NIST NEITHER REPRESENTS NOR
+ # WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED
+ # OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES NOT
+ # WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE
+ # SOFTWARE OR THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE
+ # CORRECTNESS, ACCURACY, RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
+ #
+ # You are solely responsible for determining the appropriateness of
+ # using and distributing the software and you assume all risks
+ # associated with its use, including but not limited to the risks and
+ # costs of program errors, compliance with applicable laws, damage to
+ # or loss of data, programs or equipment, and the unavailability or
+ # interruption of operation. This software is not intended to be used
+ # in any situation where a failure could cause risk of injury or
+ # damage to property. The software developed by NIST employees is not
+ # subject to copyright protection within the United States.
+
 #Post processing time parameters 
 step="1.0" #s
 startTime="5.0" #s
@@ -28,14 +62,14 @@ useRelayArray="true false"
 function RunSim {
     useRelay=$1
 
-  echo '' > "output_wns3-2019-relay_useRelay_${useRelay}_UlAvgResourceUtilizationPerRemoteUeInitXPos.txt"
-  echo '' > "output_wns3-2019-relay_useRelay_${useRelay}_UpwardAvgAppThroughputPerRemoteUeInitXPos.txt"
-  echo '' > "output_wns3-2019-relay_useRelay_${useRelay}_UpwardAvgDelayPerRemoteUeInitXPos.txt"
+  echo '' > "output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UlAvgResourceUtilizationPerRemoteUeInitXPos.txt"
+  echo '' > "output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UpwardAvgAppThroughputPerRemoteUeInitXPos.txt"
+  echo '' > "output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UpwardAvgDelayPerRemoteUeInitXPos.txt"
 
   remoteUeInitXPos=$remoteUeInitXPosStart
   while [  $remoteUeInitXPos -lt $remoteUeInitXPosEnd ]; do
 
-    outputDir="output_wns3-2019-relay_useRelay_${useRelay}_remoteUeInitXPos_${remoteUeInitXPos}"
+    outputDir="output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_remoteUeInitXPos_${remoteUeInitXPos}"
     mkdir -p $outputDir
     cd $outputDir
 
@@ -43,8 +77,8 @@ function RunSim {
     #Running the simulations
     ###########################################################################
 
-    ../build/scratch/wns3-2019-relay --useRelay=$useRelay --remoteUeInitXPos=$remoteUeInitXPos --relayUeInitXPos=$relayUeInitXPos
-    #../build/scratch/wns3-2019-relay --useRelay=$useRelay --remoteUeInitXPos=$remoteUeInitXPos --relayUeInitXPos=$relayUeInitXPos --RngRun=2
+    ../build/scratch/lte-sl-relay-remote-ooc --useRelay=$useRelay --remoteUeInitXPos=$remoteUeInitXPos --relayUeInitXPos=$relayUeInitXPos
+    #../build/scratch/lte-sl-relay-remote-ooc --useRelay=$useRelay --remoteUeInitXPos=$remoteUeInitXPos --relayUeInitXPos=$relayUeInitXPos --RngRun=2
 
     ###########################################################################
     #Calculating statistics
@@ -128,7 +162,7 @@ function RunSim {
         }
       }' "AppPacketTrace_Upward_TxNode_${upwTxNodeId}_ThroughputOverTime.txt" > "AppPacketTrace_Upward_TxNode_${upwTxNodeId}_ThroughputAverage.txt"
 
-      awk -v remoteUeInitXPos=$remoteUeInitXPos -v upwTxNodeId=$upwTxNodeId '{print remoteUeInitXPos, upwTxNodeId, $0;}' "AppPacketTrace_Upward_TxNode_${upwTxNodeId}_ThroughputAverage.txt" >> "../output_wns3-2019-relay_useRelay_${useRelay}_UpwardAvgAppThroughputPerRemoteUeInitXPos.txt"
+      awk -v remoteUeInitXPos=$remoteUeInitXPos -v upwTxNodeId=$upwTxNodeId '{print remoteUeInitXPos, upwTxNodeId, $0;}' "AppPacketTrace_Upward_TxNode_${upwTxNodeId}_ThroughputAverage.txt" >> "../output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UpwardAvgAppThroughputPerRemoteUeInitXPos.txt"
 
       #Delay
       awk -v startTime=$startTime -v endTime=$endTime  -v step=$step 'BEGIN{sum=0; count=0; sumForStd=0; }
@@ -151,7 +185,7 @@ function RunSim {
         }
       }' "AppPacketTrace_Upward_TxNode_${upwTxNodeId}_RxPacketDelayOverTime.txt" > "AppPacketTrace_Upward_TxNode_${upwTxNodeId}_RxPacketDelayAverage.txt"
       
-      awk -v remoteUeInitXPos=$remoteUeInitXPos -v upwTxNodeId=$upwTxNodeId '{print remoteUeInitXPos, upwTxNodeId, $0;}' "AppPacketTrace_Upward_TxNode_${upwTxNodeId}_RxPacketDelayAverage.txt" >> "../output_wns3-2019-relay_useRelay_${useRelay}_UpwardAvgDelayPerRemoteUeInitXPos.txt"
+      awk -v remoteUeInitXPos=$remoteUeInitXPos -v upwTxNodeId=$upwTxNodeId '{print remoteUeInitXPos, upwTxNodeId, $0;}' "AppPacketTrace_Upward_TxNode_${upwTxNodeId}_RxPacketDelayAverage.txt" >> "../output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UpwardAvgDelayPerRemoteUeInitXPos.txt"
 
     done
 
@@ -255,16 +289,16 @@ function RunSim {
           print 0, 0;
         }
       }' UL_ResourceUtilizationOverTime.txt > UL_ResourceUtilizationOverTime_Average.txt
-      awk -v remoteUeInitXPos=$remoteUeInitXPos '{print remoteUeInitXPos, $0;}' UL_ResourceUtilizationOverTime_Average.txt >> "../output_wns3-2019-relay_useRelay_${useRelay}_UlAvgResourceUtilizationPerRemoteUeInitXPos.txt"
+      awk -v remoteUeInitXPos=$remoteUeInitXPos '{print remoteUeInitXPos, $0;}' UL_ResourceUtilizationOverTime_Average.txt >> "../output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UlAvgResourceUtilizationPerRemoteUeInitXPos.txt"
       
       #Cleaning
       rm RxPhyStatsToUse.txt
       rm RxPhyStatsToUse_sorted.txt
 
     else
-      echo -e "$remoteUeInitXPos\t0" >> "../output_wns3-2019-relay_useRelay_${useRelay}_UlAvgResourceUtilizationPerRemoteUeInitXPos.txt"
+      echo -e "$remoteUeInitXPos\t0" >> "../output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UlAvgResourceUtilizationPerRemoteUeInitXPos.txt"
     fi
-
+    
     ###############################################################################
 
     ###############################DOWNWARD########################################
@@ -327,6 +361,8 @@ function RunSim {
 
       DwdStringToPlotDelay="$DwdStringToPlotDelay \"AppPacketTrace_Downward_RxNode_${dwdRxNodeId}_RxPacketDelayOverTime.txt\" using 1:3 with linespoints title \"Node ${dwdRxNodeId}\","
 
+
+
     done
 
     if [ !  -z  "$DwdStringToPlotDelay" ]
@@ -367,7 +403,7 @@ function RunSim {
 
     let remoteUeInitXPos=remoteUeInitXPos+$remoteUeInitXPosStep
 
-  done   #while [  $remoteUeInitXPos -lt $remoteUeInitXPosEnd ]
+  done   #while [  $remoteUeInitXPos -lt $remoteUeInitXPosEnd ]; do
 
   
   if [ "$useRelay" = "true" ]
@@ -379,10 +415,10 @@ function RunSim {
 
   for upwTxNodeId in $UpwTxNodeIds
   do 
-    awk -v upwTxNodeId=$upwTxNodeId '{if ($2 == upwTxNodeId){print $0;}}' "output_wns3-2019-relay_useRelay_${useRelay}_UpwardAvgAppThroughputPerRemoteUeInitXPos.txt" | sort -n > output_wns3-2019-relay_useRelay_${useRelay}_UpwardAvgAppThroughputPerRemoteUeInitXPos_${upwTxNodeId}.txt
-
-    awk -v upwTxNodeId=$upwTxNodeId '{if ($2 == upwTxNodeId && $3 != 0){print $0;}}' "output_wns3-2019-relay_useRelay_${useRelay}_UpwardAvgDelayPerRemoteUeInitXPos.txt" > "output_wns3-2019-relay_useRelay_${useRelay}_UpwardAvgDelayPerRemoteUeInitXPos_${upwTxNodeId}.txt"
-
+    awk -v upwTxNodeId=$upwTxNodeId '{if ($2 == upwTxNodeId){print $0;}}' "output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UpwardAvgAppThroughputPerRemoteUeInitXPos.txt" | sort -n > output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UpwardAvgAppThroughputPerRemoteUeInitXPos_${upwTxNodeId}.txt
+  
+    awk -v upwTxNodeId=$upwTxNodeId '{if ($2 == upwTxNodeId && $3 != 0){print $0;}}' "output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UpwardAvgDelayPerRemoteUeInitXPos.txt" > "output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UpwardAvgDelayPerRemoteUeInitXPos_${upwTxNodeId}.txt"
+ 
   done
 
 }
@@ -403,9 +439,9 @@ do
 	    legend="Without relay"
 	    linecolor="3"
     fi
-    UlStringToPlotResUtil="$UlStringToPlotResUtil \"output_wns3-2019-relay_useRelay_${useRelay}_UlAvgResourceUtilizationPerRemoteUeInitXPos.txt\" using 1:(100*\$2):3 with yerr title \"${legend}\", '' using 1:(100*\$2) with lines lc $linecolor notitle,"
-    UwdStringToPlotAvgTput="$UwdStringToPlotAvgTput \"output_wns3-2019-relay_useRelay_${useRelay}_UpwardAvgAppThroughputPerRemoteUeInitXPos_${upwTxNodeId}.txt\" using 1:3:4 with yerr title \"${legend}\", '' using 1:3 with lines lc $linecolor notitle,"
-    UwdStringToPlotAvgDelay="$UwdStringToPlotAvgDelay \"output_wns3-2019-relay_useRelay_${useRelay}_UpwardAvgDelayPerRemoteUeInitXPos_${upwTxNodeId}.txt\" using 1:3:4 with yerr title \"${legend}\", '' using 1:3 with lines lc $linecolor notitle,"
+    UlStringToPlotResUtil="$UlStringToPlotResUtil \"output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UlAvgResourceUtilizationPerRemoteUeInitXPos.txt\" using 1:(100*\$2):3 with yerr title \"${legend}\", '' using 1:(100*\$2) with lines lc $linecolor notitle,"
+    UwdStringToPlotAvgTput="$UwdStringToPlotAvgTput \"output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UpwardAvgAppThroughputPerRemoteUeInitXPos_${upwTxNodeId}.txt\" using 1:3:4 with yerr title \"${legend}\", '' using 1:3 with lines lc $linecolor notitle,"
+    UwdStringToPlotAvgDelay="$UwdStringToPlotAvgDelay \"output_lte-sl-relay-remote-ooc_useRelay_${useRelay}_UpwardAvgDelayPerRemoteUeInitXPos_${upwTxNodeId}.txt\" using 1:3:4 with yerr title \"${legend}\", '' using 1:3 with lines lc $linecolor notitle,"
     
 done #for useRelay in $useRelayArray
 
@@ -415,7 +451,7 @@ echo "Done"
 
 echo "reset 
       set terminal pngcairo nocrop enhanced size 800,600
-      set output \"output_wns3-2019-relay_UL_ResourceUtilizationPerRemoteUeInitXPos.png\"
+      set output \"output_lte-sl-relay-remote-ooc_UL_ResourceUtilizationPerRemoteUeInitXPos.png\"
       #set terminal postscript eps enhanced color font 'Helvetica,20'
       #set output \"utilization.eps\"
       #set title \"UL Average Resource Utilization \n Sampling window size = $step s\"
@@ -427,7 +463,7 @@ echo "reset
     
 echo "reset 
       set terminal pngcairo nocrop enhanced size 800,600
-      set output \"output_wns3-2019-relay_Upward_ThroughputPerRemoteUeInitXPos.png\"
+      set output \"output_lte-sl-relay-remote-ooc_Upward_ThroughputPerRemoteUeInitXPos.png\"
       #set terminal postscript eps enhanced color font 'Helvetica,20'
       #set output \"throughput.eps\"
       #set title \"Average App Throughput per Tx Node - (Bytes/s) \n Upward Direction \n Sampling window size = $step s \"
@@ -439,7 +475,7 @@ echo "reset
 
 echo "reset 
       set terminal pngcairo nocrop enhanced size 800,600
-      set output \"output_wns3-2019-relay_Upward_DelayPerRemoteUeInitXPos.png\"
+      set output \"output_lte-sl-relay-remote-ooc_Upward_DelayPerRemoteUeInitXPos.png\"
       #set terminal postscript eps enhanced color font 'Helvetica,20'
       #set output \"delay.eps\"
       #set title \"Average Packet Delay per Tx Node - (s) \n Upward Direction \n Sampling window size = $step s \"

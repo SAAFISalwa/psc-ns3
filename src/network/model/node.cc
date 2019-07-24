@@ -17,6 +17,7 @@
  *
  * Authors: George F. Riley<riley@ece.gatech.edu>
  *          Mathieu Lacage <mathieu.lacage@sophia.inria.fr>
+ * Modified by: NIST // Contributions may not be subject to US copyright.
  */
  
 #include "node.h"
