@@ -105,7 +105,7 @@ public:
 
   /**
    * \brief Indication that the remote UE report was received
-   * \param localImsi The local node IMSI value 
+   * \param localImsi The local node IMSI value
    * \param peerUeId The peer node L2ID
    * \param remoteImsi The remote UE IMSI value
    */

@@ -1933,6 +1933,7 @@ LteUePhy::DoReset ()
   m_packetBurstQueue.clear ();
   m_controlMessagesQueue.clear ();
   m_subChannelsForTransmissionQueue.clear ();
+  m_packetParamsQueue.clear();
   for (int i = 0; i < m_macChTtiDelay; i++)
     {
       Ptr<PacketBurst> pb = CreateObject <PacketBurst> ();

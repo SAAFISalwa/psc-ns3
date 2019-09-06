@@ -3690,7 +3690,7 @@ LteUeRrc::DoActivateSidelinkRadioBearer (uint32_t group, bool tx, bool rx)
 
       if (tx)
         {
-          Ptr<LteSidelinkRadioBearerInfo> slbInfo = AddSlrb (m_sidelinkConfiguration->m_sourceL2Id, group, m_sidelinkConfiguration->GetNextLcid ());
+          Ptr<LteSidelinkRadioBearerInfo> slbInfo = AddSlrb (m_sidelinkConfiguration->m_sourceL2Id, group, m_sidelinkConfiguration->GetNextLcid (group));
           NS_LOG_INFO ("Created new TX SLRB for group " << group << " LCID=" << (slbInfo->m_logicalChannelIdentity & 0xF));
         }
       if (rx)
@@ -3751,7 +3751,7 @@ LteUeRrc::DoActivateSidelinkRadioBearer (uint32_t group, bool tx, bool rx)
       NS_LOG_INFO ("Considering in coverage");
       if (tx)
         {
-          Ptr<LteSidelinkRadioBearerInfo> slbInfo = AddSlrb (m_sidelinkConfiguration->m_sourceL2Id, group, m_sidelinkConfiguration->GetNextLcid ());
+          Ptr<LteSidelinkRadioBearerInfo> slbInfo = AddSlrb (m_sidelinkConfiguration->m_sourceL2Id, group, m_sidelinkConfiguration->GetNextLcid (group));
           NS_LOG_INFO ("Created new TX SLRB for group " << group << " LCID=" << (slbInfo->m_logicalChannelIdentity & 0xF));
         }
       if (rx)
@@ -4373,6 +4373,7 @@ LteUeRrc::SendSidelinkUeInformation (bool txComm, bool rxComm, bool txDisc, bool
                   sidelinkUeInformation.slCommTxResourceReq.slDestinationInfoList.nbDestinations = destinations.size ();
                   std::list <uint32_t>::iterator it;
                   int index = 0;
+                  NS_ASSERT_MSG (destinations.size () <= MAXSL_DEST, "Maximum number of destinations (" << MAXSL_DEST << ") reached");
                   for (it = destinations.begin (); it != destinations.end (); it++)
                     {
                       sidelinkUeInformation.slCommTxResourceReq.slDestinationInfoList.SlDestinationIdentity[index++] = *it;

@@ -542,7 +542,6 @@ LteUeMac::DoTransmitPdu (LteMacSapProvider::TransmitPduParameters params)
           m_miUlHarqProcessesPacket.at (m_harqProcessId)->AddPacket (params.pdu);
           m_miUlHarqProcessesPacketTimer.at (m_harqProcessId) = HARQ_PERIOD;
           m_uePhySapProvider->SendMacPdu (params.pdu);
-          m_hasUlToTx = true;
         }
       else
         {
@@ -1278,6 +1277,8 @@ LteUeMac::DoReceiveLteControlMessage (Ptr<LteControlMessage> msg)
   NS_LOG_FUNCTION (this);
   if (msg->GetMessageType () == LteControlMessage::UL_DCI)
     {
+      //Because we received an uplink allocation, we mark that there is an uplink transmission
+      m_hasUlToTx = true;
       Ptr<UlDciLteControlMessage> msg2 = DynamicCast<UlDciLteControlMessage> (msg);
       UlDciListElement_s dci = msg2->GetDci ();
       if (dci.m_ndi == 1)
@@ -1462,11 +1463,9 @@ LteUeMac::DoReceiveLteControlMessage (Ptr<LteControlMessage> msg)
             {
               Ptr<Packet> pkt = (*j)->Copy ();
               m_uePhySapProvider->SendMacPdu (pkt);
-              m_hasUlToTx = true;
             }
           m_miUlHarqProcessesPacketTimer.at (m_harqProcessId) = HARQ_PERIOD;
         }
-
     }
   else if (msg->GetMessageType () == LteControlMessage::RAR)
     {
@@ -2327,6 +2326,7 @@ LteUeMac::GetSlUeSelectedGrant (std::list<PoolInfo>::iterator poolIt)
         {
           //found next destination
           grant.m_dst = *dstIt;
+          break;
         }
     }
   //if we did not find any destination with data to send after the current destination
@@ -2369,8 +2369,9 @@ LteUeMac::GetSlUeSelectedGrant (std::list<PoolInfo>::iterator poolIt)
                 {
                   //Compute TBS considering RLC overhead
                   tbs_bytes = (uint32_t) std::ceil (GetQueueSize (grant.m_dst) * 1.0 / tbPerKtrpVector[i]) + 2;             //RLC overhead = 2
+                  tbs_bytes = std::max ((uint32_t)8, tbs_bytes); //need at least 7 bytes for RLC
                   kValue = (uint8_t) std::pow (2, double(i));
-                  //std::cout << "k: " << (uint16_t) kValue << ", TBnumber: " << tbPerKtrpVector[i] << ", TBS: " << tbs_bytes << std::endl;
+                  NS_LOG_DEBUG ("k: " << (uint16_t) kValue << ", TBnumber: " << tbPerKtrpVector[i] << ", TBS: " << tbs_bytes);
                   std::pair <uint8_t, std::vector <LteAmc::McsPrbInfo> > ktrpMcsPrbInfoPair (kValue, m_amc->GetUlMcsNprbInfoFromTbs (tbs_bytes * 8,poolIt->m_pool->GetPsschBandwidth (), 20));
                   /*for (uint32_t vi = 0; vi < ktrpMcsPrbInfoPair.second.size (); vi++)
                   {
@@ -2379,8 +2380,8 @@ LteUeMac::GetSlUeSelectedGrant (std::list<PoolInfo>::iterator poolIt)
                   if (ktrpMcsPrbInfoPair.second.size () > 0)
                     {
                       noAvailablePairForTbs = false;
-                    }
-                  kMcsPrbPairList.push_back (ktrpMcsPrbInfoPair);
+                      kMcsPrbPairList.push_back (ktrpMcsPrbInfoPair);
+                   }
                 }
             }
           //Check if no <MCS,PRB> pair can support TBS
@@ -2395,8 +2396,10 @@ LteUeMac::GetSlUeSelectedGrant (std::list<PoolInfo>::iterator poolIt)
           else
             {
               //Configure based on scheduling goal.
-              uint32_t kIndex = 0;
-              uint32_t pairIndex = 0;
+              uint32_t randomPairIndex = 0;
+              uint32_t pairIndexCounter = 0;
+              uint32_t kPairIndex = 0;
+              uint32_t totalMcsPrbPairs = 0;
               double pairScore = 0.0;
               double bestPairScore = 0.0;
               double sinrFromBler = 0.0;
@@ -2433,16 +2436,39 @@ LteUeMac::GetSlUeSelectedGrant (std::list<PoolInfo>::iterator poolIt)
                   break;
                 case LteUeMac::SlSchedulingGrantMetric::RANDOM:
                   NS_LOG_INFO ("PSSCH RANDOM grant scheduling");
-                  //1. size of list; choose random
-                  kIndex = m_ueSelectedUniformVariable->GetInteger (0, kMcsPrbPairList.size () - 1);
-                  itPair = kMcsPrbPairList.begin ();
-                  std::advance (itPair, kIndex);
-                  slKtrp = (*itPair).first;               //m_slKtrp
+                  //Compute the total number of (MCS,PRBs) pairs
+                  totalMcsPrbPairs = 0; //Reset
+                  for (itPair = kMcsPrbPairList.begin (); itPair != kMcsPrbPairList.end (); itPair++)
+                  {
+                      totalMcsPrbPairs += (*itPair).second.size ();
+                      NS_LOG_DEBUG ("K= " << (uint16_t)(*itPair).first << " , Available <MCS,PRB> pairs = " << (*itPair).second.size ());
+                  }
+                  NS_LOG_DEBUG ("Total pair indexes " << totalMcsPrbPairs);
+                  
+                  randomPairIndex = m_ueSelectedUniformVariable->GetInteger (0, totalMcsPrbPairs - 1);
+                  NS_LOG_DEBUG ("randomPairIndex= " << randomPairIndex );
+                  //Get the pair
+                  pairIndexCounter = 0; //Reset
+                  for (itPair = kMcsPrbPairList.begin (); itPair != kMcsPrbPairList.end (); itPair++)
+                  {
+                      if(randomPairIndex < (pairIndexCounter + (*itPair).second.size ()))
+                          break;
+                      pairIndexCounter += (*itPair).second.size ();
+                  }
+                  if (itPair == kMcsPrbPairList.end ())
+                  {
+                      NS_FATAL_ERROR ("CORRUPTED <MCS,PRB> INDEXES LIST: ");   
+                  }
+                  
+                  slKtrp = (*itPair).first; //m_slKtrp
                   //uint32_t vectorSize = (*itPair).second.size ();
-                  pairIndex = m_ueSelectedUniformVariable->GetInteger (0, (*itPair).second.size () - 1);
-                  grant.m_rbLen = (*itPair).second[pairIndex].nbRb;
-                  grant.m_mcs = (*itPair).second[pairIndex].mcs;
-                  grant.m_tbSize = (*itPair).second[pairIndex].tbs;
+                  kPairIndex = randomPairIndex - pairIndexCounter;
+                  grant.m_rbLen = (*itPair).second[kPairIndex].nbRb;
+                  grant.m_mcs = (*itPair).second[kPairIndex].mcs;
+                  grant.m_tbSize = (*itPair).second[kPairIndex].tbs;
+                  //std::cout<<"Total pair indexes " << totalMcsPrbPairs << ", randomPairIndex= " << randomPairIndex << std::endl;
+                  //std::cout<<"kPairIndex= " << kPairIndex << ", <MCS, PRBs>= <" << (uint16_t)grant.m_mcs << ", " << (uint16_t)grant.m_rbLen << ">, TBS= " << grant.m_tbSize <<std::endl;
+                  
                   break;
                 case LteUeMac::SlSchedulingGrantMetric::MAX_COVERAGE:
                   NS_LOG_INFO ("PSSCH MAX_COVERAGE grant scheduling");

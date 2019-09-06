@@ -158,6 +158,7 @@ def build(bld):
         'model/lte-sl-o2o-comm-params.cc',
         'model/lte-sl-ue-controller.cc',
         'model/lte-sl-basic-ue-controller.cc',
+        'model/lte-sl-ue-controller-camad-2019.cc',
         'model/lte-sl-ue-net-device.cc',
         'model/lte-sl-tag.cc',
         ]
@@ -243,6 +244,8 @@ def build(bld):
         'test/test-sl-in-covrg-discovery-regular.cc',
         'test/test-sl-in-covrg-discovery-multi-app.cc',
         'test/test-sl-in-covrg-discovery-1relay-1remote.cc',
+        'test/test-sl-ooc-relay-generic-traffic-rm2rh.cc',
+        'test/test-sl-ooc-relay-generic-traffic-rm2rm.cc',
         'test/test-sidelink-synch.cc'
         ]
 
@@ -400,6 +403,7 @@ def build(bld):
         'model/lte-sl-o2o-comm-params.h',
         'model/lte-sl-ue-controller.h',
         'model/lte-sl-basic-ue-controller.h',
+        'model/lte-sl-ue-controller-camad-2019.h',        
         'model/lte-sl-ue-net-device.h',
         'model/lte-sl-tag.h',
         ]

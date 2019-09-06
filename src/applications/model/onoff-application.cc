@@ -21,6 +21,8 @@
 // ns3 - On/Off Data Source Application class
 // George F. Riley, Georgia Tech, Spring 2007
 // Adapted from ApplicationOnOff in GTNetS.
+// Modified by:
+//    NIST // Contributions may not be subject to US copyright. 
 
 #include "ns3/log.h"
 #include "ns3/address.h"
@@ -41,6 +43,7 @@
 #include "ns3/udp-socket-factory.h"
 #include "ns3/string.h"
 #include "ns3/pointer.h"
+#include "ns3/seq-ts-header.h"
 
 namespace ns3 {
 
@@ -104,7 +107,8 @@ OnOffApplication::OnOffApplication ()
     m_connected (false),
     m_residualBits (0),
     m_lastStartTime (Seconds (0)),
-    m_totBytes (0)
+    m_totBytes (0),
+    m_sent(0)
 {
   NS_LOG_FUNCTION (this);
 }
@@ -282,9 +286,13 @@ void OnOffApplication::SendPacket ()
   NS_LOG_FUNCTION (this);
 
   NS_ASSERT (m_sendEvent.IsExpired ());
-  Ptr<Packet> packet = Create<Packet> (m_pktSize);
+  SeqTsHeader seqTs;
+  seqTs.SetSeq (m_sent);
+  Ptr<Packet> packet = Create<Packet> (m_pktSize-(8+4)); // 8+4 : the size of the seqTs header
+  packet->AddHeader (seqTs);
   m_txTrace (packet);
   m_socket->Send (packet);
+  ++m_sent;
   m_totBytes += m_pktSize;
   Address localAddress;
   m_socket->GetSockName (localAddress);

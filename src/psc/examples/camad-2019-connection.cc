@@ -47,77 +47,88 @@
 
 using namespace ns3;
 
+NS_LOG_COMPONENT_DEFINE ("camad-2019-connection");
 
+
+//Trace sink function for logging when a UE receives a PC5 signaling packet
+//to connect to the Trace 'PC5SignalingPacketTrace' of 'LteSlUeRrc'
 void
-UePacketTrace (Ptr<OutputStreamWrapper> stream, const Ipv6Address &localAddrs, std::string context, Ptr<const Packet> p, const Address &srcAddrs, const Address &dstAddrs)
+TraceSinkPC5SignalingPacketTrace (Ptr<OutputStreamWrapper> stream, uint32_t srcL2Id, uint32_t dstL2Id, Ptr<Packet> p)
 {
-  std::ostringstream oss;
-  stream->GetStream ()->precision (6);
+  LteSlPc5SignallingMessageType lpc5smt;
+  p->PeekHeader (lpc5smt);
 
-  SeqTsHeader seqTs;
-  p->PeekHeader (seqTs);
+  *stream->GetStream () << Simulator::Now ().GetSeconds () << "\t" << srcL2Id << "\t" << dstL2Id << "\t" << (uint32_t)lpc5smt.GetMessageType () << std::endl;
+}
 
-  *stream->GetStream () << Simulator::Now ().GetNanoSeconds () / (double) 1e9 << "\t" << context << "\t" << p->GetSize () << "\t" << seqTs.GetSeq () << "\t";
-  if (Inet6SocketAddress::IsMatchingType (srcAddrs))
-    {
-      oss << Inet6SocketAddress::ConvertFrom (srcAddrs).GetIpv6 ();
-      if (!oss.str ().compare ("::")) //srcAddrs not set
-        {
-          *stream->GetStream () << localAddrs << ":" << Inet6SocketAddress::ConvertFrom (srcAddrs).GetPort () << "\t" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetPort () << std::endl;
-        }
-      else
-        {
-          oss.str ("");
-          oss << Inet6SocketAddress::ConvertFrom (dstAddrs).GetIpv6 ();
-          if (!oss.str ().compare ("::")) //dstAddrs not set
-            {
-              *stream->GetStream () << Inet6SocketAddress::ConvertFrom (srcAddrs).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (srcAddrs).GetPort () << "\t" << localAddrs << ":" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetPort () << std::endl;
-            }
-          else
-            {
-              *stream->GetStream () << Inet6SocketAddress::ConvertFrom (srcAddrs).GetIpv6 () << ":" << InetSocketAddress::ConvertFrom (srcAddrs).GetPort () << "\t" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (dstAddrs).GetPort () << std::endl;
-            }
-        }
-    }
-  else
-    {
-      *stream->GetStream () << "Unknown address type!" << std::endl;
-    }
+//Trace sink function for logging when a Remote UE starts the one-to-one connection procedure
+//to connect to the Trace 'RemoteConnectionStart' of the 'LteSlUeControllerCamad2019'
+void
+TraceSinkRemoteConnectionStart (Ptr<OutputStreamWrapper> stream,  uint32_t remoteId, uint32_t relayId, uint32_t connectionCount)
+{
+  *stream->GetStream () << Simulator::Now ().GetSeconds ()
+                        << "\t" << remoteId << "\t" << relayId << "\t" << "S" << "\t" << connectionCount
+                        << std::endl;
+}
+
+//Trace sink function for logging when a Remote UE completes successfully the one-to-one connection procedure
+//to connect to the Trace 'RemoteConnectionEstablished' of the 'LteSlUeControllerCamad2019'
+void
+TraceSinkRemoteConnectionEstablished (Ptr<OutputStreamWrapper> stream, uint32_t remoteId, uint32_t relayId, uint32_t connectionCount, double timeToConnect)
+{
+  *stream->GetStream () << Simulator::Now ().GetSeconds ()
+                        << "\t" << remoteId << "\t" << relayId << "\t" << "E" << "\t" << connectionCount
+                        << "\t" << timeToConnect << std::endl;
 }
 
 /*
- * Scenario with configurable number of relay and remote UEs, and traffic
+ * This scenario is used to evaluate the UE-to-Network Relay one-to-one
+ * connection protocol.
+ * Parameters:
+ * - the number of Remote UEs (nRemoteUes) in the scenario,
+ * - the value of the timer T4100 controlling Direct Communication Requests
+ * retransmissions for the Remote UE (remoteT4100),
+ * - the maximum value of Direct Communication Requests retransmissions for the
+ * Remote UE (remoteDCRqMax),
+ * - whether the Relay UE has its own UL traffic or not (relayTraffic)
+ * - the frequency of the UL Relay UE traffic if aplicable (relayTrafficOffMean)
  */
-
-NS_LOG_COMPONENT_DEFINE ("lte-sl-relay-generic");
-
 
 int main (int argc, char *argv[])
 {
-  double simTime = 20.0;
-  bool useRelay = true;
-  double relayUeInitXPos = 300.0;
-  double remoteUeInitXPos = 500.0;
+  double simTime = 10.0; //s
+  double relayUeInitXPos = 800.0;
+  double remoteUeInitXPos = 1000.0;
   uint32_t nRelayUes = 1;
-  uint32_t nRemoteUes = 1;
-  bool remoteTraffic = true;
-  bool relayTraffic = false;
 
+
+  uint32_t nRemoteUes = 1;
+  bool relayTraffic = false;
+  double relayTrafficOffMean = 20;
+  double maxConnectionAttempts = 1;
+
+  double remoteT4100 = 200; //ms
+  double remoteDCRqMax = 4;
 
   CommandLine cmd;
   cmd.AddValue ("simTime", "Total duration of the simulation [s]", simTime);
-  cmd.AddValue ("useRelay", "Use the UE-to-Network Relay", useRelay);
 
-  cmd.AddValue ("relayUeInitXPos", "Initial X coordinate of the relay UE", relayUeInitXPos);
-  cmd.AddValue ("remoteUeInitXPos", "Initial X coordinate of the remote UE", remoteUeInitXPos);
-
-  cmd.AddValue ("nRelayUes", "Number of relay UEs", nRelayUes);
   cmd.AddValue ("nRemoteUes", "Number of remote UEs", nRemoteUes);
 
-  cmd.AddValue ("remoteTraffic", "The Remote UEs have their own traffic", remoteTraffic);
-  cmd.AddValue ("relayTraffic", "The Relay UEs have their own traffic", relayTraffic);
+  cmd.AddValue ("remoteT4100", "Remote UE retransmission timer T4100 (ms)", remoteT4100);
+  cmd.AddValue ("remoteDCRqMax", "Maximum Value of Direct Communication Requests retransmissions for Remote UE", remoteDCRqMax);
+
+  cmd.AddValue ("relayTraffic", "The Relay UE has its own traffic", relayTraffic);
+  cmd.AddValue ("relayTrafficOffMean", "The mean of the distribution of the 'Off' periods for the Relay UE traffic (if set to 100 no traffic will be generated, regardless of relayTraffic flag)", relayTrafficOffMean);
+
 
   cmd.Parse (argc, argv);
+
+  //relayTrafficOffMean=100 is the indication of no traffic
+  if (relayTrafficOffMean == 100)
+    {
+      relayTraffic = false;
+    }
 
   NS_LOG_INFO ("Configuring default parameters...");
 
@@ -125,7 +136,8 @@ int main (int argc, char *argv[])
   Config::SetDefault ("ns3::LteUeMac::SlGrantMcs", UintegerValue (16));
   Config::SetDefault ("ns3::LteUeMac::SlGrantSize", UintegerValue (6)); //The number of RBs allocated per UE for Sidelink
   Config::SetDefault ("ns3::LteUeMac::Ktrp", UintegerValue (1));
-  Config::SetDefault ("ns3::LteUeMac::UseSetTrp", BooleanValue (false)); //use default Trp index of 0
+  Config::SetDefault ("ns3::LteUeMac::UseSetTrp", BooleanValue (false));
+  Config::SetDefault ("ns3::LteUeMac::SlScheduler", StringValue ("MaxCoverage")); //Values include Fixed, Random, MinPrb, MaxCoverage
 
   //Set the frequency
   Config::SetDefault ("ns3::LteEnbNetDevice::DlEarfcn", UintegerValue (5330));
@@ -135,12 +147,13 @@ int main (int argc, char *argv[])
   Config::SetDefault ("ns3::LteEnbNetDevice::UlBandwidth", UintegerValue (50));
 
   // Set error models
-  Config::SetDefault ("ns3::LteSpectrumPhy::SlCtrlErrorModelEnabled", BooleanValue (true));
-  Config::SetDefault ("ns3::LteSpectrumPhy::SlDataErrorModelEnabled", BooleanValue (true));
   Config::SetDefault ("ns3::LteSpectrumPhy::CtrlFullDuplexEnabled", BooleanValue (true));
-  Config::SetDefault ("ns3::LteSpectrumPhy::DropRbOnCollisionEnabled", BooleanValue (false));
-  Config::SetDefault ("ns3::LteUePhy::DownlinkCqiPeriodicity", TimeValue (MilliSeconds (79)));
+  Config::SetDefault ("ns3::LteSpectrumPhy::DropRbOnCollisionEnabled", BooleanValue (true));
+  Config::SetDefault ("ns3::LteSpectrumPhy::SlCtrlErrorModelEnabled", BooleanValue (false));
+  Config::SetDefault ("ns3::LteSpectrumPhy::SlDataErrorModelEnabled", BooleanValue (false));
+  Config::SetDefault ("ns3::LteSpectrumPhy::SlDiscoveryErrorModelEnabled", BooleanValue (false));
 
+  Config::SetDefault ("ns3::LteUePhy::DownlinkCqiPeriodicity", TimeValue (MilliSeconds (79)));
 
   //Set the UEs power in dBm
   Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
@@ -156,7 +169,28 @@ int main (int argc, char *argv[])
   lteHelper->SetEpcHelper (epcHelper);
   Ptr<LteSidelinkHelper> proseHelper = CreateObject<LteSidelinkHelper> ();
   proseHelper->SetLteHelper (lteHelper);
-  Config::SetDefault ("ns3::LteSlBasicUeController::ProseHelper", PointerValue (proseHelper));
+  //Config::SetDefault ("ns3::LteSlBasicUeController::ProseHelper", PointerValue (proseHelper));
+
+  //Set the Sl UE controller to be used
+  lteHelper->SetAttribute ("SlUeController", StringValue ("ns3::LteSlUeControllerCamad2019"));
+  Config::SetDefault ("ns3::LteSlUeControllerCamad2019::Campaign", StringValue ("Connection"));
+  Config::SetDefault ("ns3::LteSlUeControllerCamad2019::MaxConnectionAttempts", DoubleValue (maxConnectionAttempts));
+  Config::SetDefault ("ns3::LteSlUeControllerCamad2019::ProseHelper", PointerValue (proseHelper));
+
+
+  //Configure Timers
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4100", UintegerValue (remoteT4100));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCRq_maximum", UintegerValue (remoteDCRqMax));
+
+  //High timers to maintain connection during simulation time
+  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4111", UintegerValue (simTime * 1000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4108", UintegerValue (simTime * 1000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4101", UintegerValue (simTime * 1000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4102", UintegerValue (simTime * 1000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4103", UintegerValue (simTime * 1000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dTRUIR", UintegerValue (simTime * 1000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4103", UintegerValue (simTime * 1000));
+
 
   //Set pathloss model
   lteHelper->SetAttribute ("PathlossModel", StringValue ("ns3::Cost231PropagationLossModel"));
@@ -164,16 +198,13 @@ int main (int argc, char *argv[])
   //Enable Sidelink
   lteHelper->SetAttribute ("UseSidelink", BooleanValue (true));
 
+  //Internet configuration
   Ptr<Node> pgw = epcHelper->GetPgwNode ();
-
-  // Create a single RemoteHost
   NodeContainer remoteHostContainer;
   remoteHostContainer.Create (1);
   Ptr<Node> remoteHost = remoteHostContainer.Get (0);
   InternetStackHelper internet;
   internet.Install (remoteHostContainer);
-
-  // Create the Internet
   PointToPointHelper p2ph;
   p2ph.SetDeviceAttribute ("DataRate", DataRateValue (DataRate ("100Gb/s")));
   p2ph.SetDeviceAttribute ("Mtu", UintegerValue (1500));
@@ -204,7 +235,6 @@ int main (int argc, char *argv[])
   //eNodeB
   Ptr<ListPositionAllocator> positionAllocEnb = CreateObject<ListPositionAllocator> ();
   positionAllocEnb->Add (Vector (0.0, 0.0, 30.0));
-
   //Relay UEs
   Ptr<ListPositionAllocator> positionAllocRelays = CreateObject<ListPositionAllocator> ();
   for (uint32_t ry = 0; ry < relayUeNodes.GetN (); ++ry)
@@ -216,7 +246,6 @@ int main (int argc, char *argv[])
   for (uint32_t rm = 0; rm < remoteUeNodes.GetN (); ++rm)
     {
       positionAllocRemotes->Add (Vector (remoteUeInitXPos, 0.0, 1.5));
-
     }
 
   //Install mobility
@@ -244,11 +273,11 @@ int main (int argc, char *argv[])
   NetDeviceContainer remoteUeDevs = lteHelper->InstallUeDevice (remoteUeNodes);
   NetDeviceContainer allUeDevs = NetDeviceContainer (relayUeDevs, remoteUeDevs);
 
-  //Configure Sidelink
+  //Configure Sidelink on the eNB
   Ptr<LteSlEnbRrc> enbSidelinkConfiguration = CreateObject<LteSlEnbRrc> ();
   enbSidelinkConfiguration->SetSlEnabled (true);
 
-  //Configure communication pool
+  //Configure Communication pool
   LteRrcSap::SlCommTxResourcesSetup pool;
 
   pool.setup = LteRrcSap::SlCommTxResourcesSetup::UE_SELECTED;
@@ -277,7 +306,7 @@ int main (int argc, char *argv[])
   //Add the pool as a default pool
   enbSidelinkConfiguration->SetDefaultPool (pool);
 
-  //Configure discovery pool
+  //Configure Discovery pool
   enbSidelinkConfiguration->SetDiscEnabled (true);
 
   LteRrcSap::SlDiscTxResourcesSetup discPool;
@@ -302,21 +331,18 @@ int main (int argc, char *argv[])
   discPool.ueSelected.poolToAddModList.pools[0].pool =  pDiscFactory.CreatePool ();
 
   enbSidelinkConfiguration->AddDiscPool (discPool);
-
-  //Install Sidelink configuration for eNBs
   lteHelper->InstallSidelinkConfiguration (enbDevs, enbSidelinkConfiguration);
 
   //Configure Sidelink Preconfiguration for the UEs
   Ptr<LteSlUeRrc> ueSidelinkConfiguration = CreateObject<LteSlUeRrc> ();
   ueSidelinkConfiguration->SetSlEnabled (true);
+  ueSidelinkConfiguration->SetDiscEnabled (true);
   LteRrcSap::SlPreconfiguration preconfiguration;
   ueSidelinkConfiguration->SetSlPreconfiguration (preconfiguration);
-  ueSidelinkConfiguration->SetDiscEnabled (true);
   uint8_t nb = 3;
   ueSidelinkConfiguration->SetDiscTxResources (nb);
   ueSidelinkConfiguration->SetDiscInterFreq (enbDevs.Get (0)->GetObject<LteEnbNetDevice> ()->GetUlEarfcn ());
-  lteHelper->InstallSidelinkConfiguration (relayUeDevs, ueSidelinkConfiguration);
-  lteHelper->InstallSidelinkConfiguration (remoteUeDevs, ueSidelinkConfiguration);
+  lteHelper->InstallSidelinkConfiguration (allUeDevs, ueSidelinkConfiguration);
 
   //Install the IP stack on the UEs and assign IP address
   internet.Install (relayUeNodes);
@@ -348,10 +374,8 @@ int main (int argc, char *argv[])
   Ptr<Ipv6StaticRouting> remoteHostStaticRouting = ipv6RoutingHelper.GetStaticRouting (remoteHost->GetObject<Ipv6> ());
   remoteHostStaticRouting->AddNetworkRouteTo ("7777:f000::", Ipv6Prefix (60), internetIpIfaces.GetAddress (0, 1), 1, 0);
 
-
-  //Routing downward traffic
   Ptr<Ipv6StaticRouting> pgwStaticRouting = ipv6RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv6> ());
-  pgwStaticRouting->AddNetworkRouteTo ("7777:f00e:0:0::", Ipv6Prefix (60), Ipv6Address ("::"), 1, 0);
+  pgwStaticRouting->AddNetworkRouteTo ("7777:f00e::", Ipv6Prefix (48), Ipv6Address ("::"), 1, 0);
 
   //Attach each UE to the best available eNB
   lteHelper->Attach (allUeDevs);
@@ -363,150 +387,113 @@ int main (int argc, char *argv[])
   // interface 0 is localhost, 1 is the p2p device
   Ipv6Address remoteHostAddr = internetIpIfaces.GetAddress (1, 1);
   uint16_t echoPortBase = 50000;
-  ApplicationContainer serverApps;
-  ApplicationContainer clientApps;
+  ApplicationContainer relayServerApps;
+  ApplicationContainer remoteServerApps;
 
-  //For each UE, we have a pair (UpdEchoClient, UdpEchoServer)
+  ApplicationContainer relayClientApps;
+  ApplicationContainer remoteClientApps;
+
+  //For each Relay UE, we have a pair (OnOffApplication, PacketSink)
   //Each UE has an assigned port
-  //UdpEchoClient installed in the UE, sending to the remoteHost address in the UE port
-  //UdpEchoServer installed in the remoteHost, listening to the UE port
-
+  //OnOffApplication installed in the UE, sending to the remoteHost address in the UE port
+  //PacketSink installed in the remoteHost, listening to the UE port, consuming packets
   if (relayTraffic)
     {
+      Ptr<ConstantRandomVariable> onRv = CreateObject<ConstantRandomVariable> ();
+      onRv->SetAttribute ("Constant", DoubleValue (1 / 1000.0)); //Seconds
+
+      Ptr<NormalRandomVariable> offRv = CreateObject<NormalRandomVariable> ();
+      offRv->SetAttribute ("Mean", DoubleValue (relayTrafficOffMean / 1000.0)); //Seconds
+      //Variance=0.00001 gives a 4 ms 90 th percentile variation
+      // e.g., With Mean=0.020, the 90th percentile is 0.024 --> values in [16 ms, 24 ms]
+      offRv->SetAttribute ("Variance", DoubleValue (0.00001));
+      //Bound = Mean/2, i.e., values are in [Mean - Mean/2; Mean + Mean/2]
+      // e.g., Mean = 0.020 we will have values in [10 ms, 30 ms]
+      offRv->SetAttribute ("Bound", DoubleValue ((relayTrafficOffMean / 2) / 1000.0));
+
       for (uint16_t relUeIdx = 0; relUeIdx < relayUeNodes.GetN (); relUeIdx++)
         {
           uint16_t relUePort = echoPortBase + 100 + relUeIdx;
 
-          //UdpEchoServer in the remoteHost for the Remote UE
-          UdpEchoServerHelper echoServerHelper (relUePort);
-          ApplicationContainer singleServerApp = echoServerHelper.Install (remoteHost);
+          //Packet Sink in the remoteHost
+          PacketSinkHelper packetSinkHelper ("ns3::UdpSocketFactory", Inet6SocketAddress (remoteHostAddr, relUePort));
+          ApplicationContainer singleServerApp = packetSinkHelper.Install (remoteHost);
           singleServerApp.Start (Seconds (1.0));
           singleServerApp.Stop (Seconds (simTime));
+          relayServerApps.Add (singleServerApp);
 
-          serverApps.Add (singleServerApp);
+          //On-off application on the Relay UE
+          OnOffHelper onOffHelper ("ns3::UdpSocketFactory",
+                                   Address ( Inet6SocketAddress (remoteHostAddr, relUePort)));
+          //Values chosen to generate a packet the next ms after the start of an "on" period
+          // nextTime=(100*8)/800000 = 0.001 s
+          onOffHelper.SetAttribute ("PacketSize", UintegerValue (100)); //Bytes
+          onOffHelper.SetAttribute ("DataRate", DataRateValue (800000)); // bit/s
 
-
-          //UdpEchoClient in the Remote UE
-          UdpEchoClientHelper echoClientHelper (remoteHostAddr);
-          echoClientHelper.SetAttribute ("MaxPackets", UintegerValue (8000000));
-          echoClientHelper.SetAttribute ("Interval", TimeValue (Seconds (0.20)));
-          echoClientHelper.SetAttribute ("PacketSize", UintegerValue (150 - (12)));
-
-          echoClientHelper.SetAttribute ("RemotePort", UintegerValue (relUePort));
-
-          ApplicationContainer singleClientApp = echoClientHelper.Install (relayUeNodes.Get (relUeIdx));
-          singleClientApp.Start (Seconds (3.0) + MilliSeconds (relUeIdx * 50) );
+          onOffHelper.SetAttribute ("OnTime", PointerValue (onRv));
+          onOffHelper.SetAttribute ("OffTime", PointerValue (offRv));
+          ApplicationContainer singleClientApp = onOffHelper.Install (relayUeNodes.Get (relUeIdx));
+          singleClientApp.Start (Seconds (3.0));
           singleClientApp.Stop (Seconds (simTime));
-          clientApps.Add (singleClientApp);
 
+          relayClientApps.Add (singleClientApp);
         }
     }
-
-  if (remoteTraffic)
-    {
-
-      for (uint16_t remUeIdx = 0; remUeIdx < remoteUeNodes.GetN (); remUeIdx++)
-        {
-          uint16_t remUePort = echoPortBase + remUeIdx;
-
-          //UdpEchoServer in the remoteHost for the Remote UE
-          UdpEchoServerHelper echoServerHelper (remUePort);
-          ApplicationContainer singleServerApp = echoServerHelper.Install (remoteHost);
-          singleServerApp.Start (Seconds (1.0));
-          singleServerApp.Stop (Seconds (simTime));
-
-          serverApps.Add (singleServerApp);
-
-
-          //UdpEchoClient in the Remote UE
-          UdpEchoClientHelper echoClientHelper (remoteHostAddr);
-          echoClientHelper.SetAttribute ("MaxPackets", UintegerValue (8000000));
-          echoClientHelper.SetAttribute ("Interval", TimeValue (Seconds (0.2)));
-          echoClientHelper.SetAttribute ("PacketSize", UintegerValue (150 - (12)));
-
-          echoClientHelper.SetAttribute ("RemotePort", UintegerValue (remUePort));
-
-          ApplicationContainer singleClientApp = echoClientHelper.Install (remoteUeNodes.Get (remUeIdx));
-          singleClientApp.Start (Seconds (3.0) + MilliSeconds (remUeIdx * 50) );
-          singleClientApp.Stop (Seconds (simTime));
-          clientApps.Add (singleClientApp);
-
-        }
-    }
-  //Traces
-  if (relayTraffic || remoteTraffic)
-    {
-
-      //Sent by UE, Rx by Remote Host
-      Ptr<OutputStreamWrapper> upwardStream = ascii.CreateFileStream ("AppPacketTrace_Upward.txt");
-      *upwardStream->GetStream () << "time(sec)\ttx/rx\tNodeID\tIMSI\tPktSize(bytes)\tPktUid\tIP[src]\tIP[dst]" << std::endl;
-      //Sent by Remote Host, Rx by UE
-      Ptr<OutputStreamWrapper> downwardStream = ascii.CreateFileStream ("AppPacketTrace_Downward.txt");
-      *downwardStream->GetStream () << "time(sec)\ttx/rx\tNodeID\tIMSI\tPktSize(bytes)\tPktUid\tIP[src]\tIP[dst]" << std::endl;
-      std::ostringstream oss;
-      for (uint16_t ac = 0; ac < serverApps.GetN (); ac++)
-        {
-          Ipv6Address localAddrs =  serverApps.Get (ac)->GetNode ()->GetObject<Ipv6L3Protocol> ()->GetAddress (1,1).GetAddress ();
-
-          //Upward: Tx by UE / Rx by Remote Host
-          oss << "rx\t" << serverApps.Get (ac)->GetNode ()->GetId () << "\t" << "-";
-          serverApps.Get (ac)->TraceConnect ("RxWithAddresses", oss.str (), MakeBoundCallback (&UePacketTrace, upwardStream, localAddrs));
-          oss.str ("");
-
-          //Downward: Tx by Remote Host / Rx by UE
-          oss << "tx\t" << serverApps.Get (ac)->GetNode ()->GetId () << "\t" << "-";
-          serverApps.Get (ac)->TraceConnect ("TxWithAddresses", oss.str (), MakeBoundCallback (&UePacketTrace, downwardStream, localAddrs));
-          oss.str ("");
-        }
-
-      for (uint16_t ac = 0; ac < clientApps.GetN (); ac++)
-        {
-          Ipv6Address localAddrs =  clientApps.Get (ac)->GetNode ()->GetObject<Ipv6L3Protocol> ()->GetAddress (1,1).GetAddress ();
-
-          //Downward: Tx by Remote Host / Rx by UE
-          oss << "rx\t" << clientApps.Get (ac)->GetNode ()->GetId () << "\t" << clientApps.Get (ac)->GetNode ()->GetDevice (0)->GetObject<LteUeNetDevice> ()->GetImsi ();
-          clientApps.Get (ac)->TraceConnect ("RxWithAddresses", oss.str (), MakeBoundCallback (&UePacketTrace, downwardStream, localAddrs));
-          oss.str ("");
-
-          //Upward: Tx by UE / Rx by Remote Host
-          oss << "tx\t" << clientApps.Get (ac)->GetNode ()->GetId () << "\t" << clientApps.Get (ac)->GetNode ()->GetDevice (0)->GetObject<LteUeNetDevice> ()->GetImsi ();
-          clientApps.Get (ac)->TraceConnect ("TxWithAddresses", oss.str (), MakeBoundCallback (&UePacketTrace, upwardStream, localAddrs));
-          oss.str ("");
-        }
-    }
-
   ///*** End of application configuration ***///
 
 
   ///*** Configure Relaying ***///
-  if (useRelay)
+  Ptr<OutputStreamWrapper> PC5SignalingPacketTraceStream = ascii.CreateFileStream ("PC5SignalingPacketTrace.txt");
+  *PC5SignalingPacketTraceStream->GetStream () << "time(s)\ttxId\tRxId\tmsgType" << std::endl;
+  Ptr<OutputStreamWrapper> remoteConnectionEventsStream = ascii.CreateFileStream ("remoteConnectionEventsTrace.txt");
+  *remoteConnectionEventsStream->GetStream () << "time(s)\tremoteId\trelayId\teventType\tconnId\tconnTime" << std::endl;
+
+  proseHelper->SetIpv6BaseForRelayCommunication ("7777:f00e::", Ipv6Prefix (48));
+
+  Ptr<EpcTft> tft = Create<EpcTft> ();
+  EpcTft::PacketFilter dlpf;
+  dlpf.localIpv6Address.Set ("7777:f00e::");
+  dlpf.localIpv6Prefix = Ipv6Prefix (32);
+  tft->Add (dlpf);
+  EpsBearer bearer (EpsBearer::NGBR_VIDEO_TCP_DEFAULT);
+  lteHelper->ActivateDedicatedEpsBearer (relayUeDevs, bearer, tft);
+
+  for (uint32_t ryDevIdx = 0; ryDevIdx < relayUeDevs.GetN (); ryDevIdx++)
     {
-      proseHelper->SetIpv6BaseForRelayCommunication ("7777:f00e::", Ipv6Prefix (48));
 
-      Ptr<EpcTft> tft = Create<EpcTft> ();
-      EpcTft::PacketFilter dlpf;
-      dlpf.localIpv6Address.Set ("7777:f00e::");
-      dlpf.localIpv6Prefix = Ipv6Prefix (32);
-      tft->Add (dlpf);
-      EpsBearer bearer (EpsBearer::NGBR_VIDEO_TCP_DEFAULT);
-      lteHelper->ActivateDedicatedEpsBearer (relayUeDevs, bearer, tft);
+      Simulator::Schedule (Seconds (2.0 ), &LteSidelinkHelper::StartRelayService, proseHelper, relayUeDevs.Get (ryDevIdx), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RelayUE);
+    }
+  for (uint32_t rmDevIdx = 0; rmDevIdx < remoteUeDevs.GetN (); rmDevIdx++)
+    {
+      Simulator::Schedule ((Seconds (4.0 )), &LteSidelinkHelper::StartRelayService, proseHelper, remoteUeDevs.Get (rmDevIdx), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RemoteUE);
 
-      for (uint32_t ryDevIdx = 0; ryDevIdx < relayUeDevs.GetN (); ryDevIdx++)
-        {
-          Simulator::Schedule (Seconds (2.0 + 4 * ryDevIdx), &LteSidelinkHelper::StartRelayService, proseHelper, relayUeDevs.Get (ryDevIdx), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RelayUE);
-        }
-      for (uint32_t rmDevIdx = 0; rmDevIdx < remoteUeDevs.GetN (); rmDevIdx++)
-        {
-          Simulator::Schedule ((Seconds (4.0 + rmDevIdx)), &LteSidelinkHelper::StartRelayService, proseHelper, remoteUeDevs.Get (rmDevIdx), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RemoteUE);
-        }
+      Ptr<LteUeRrc> rrc = remoteUeDevs.Get (rmDevIdx)->GetObject<LteUeNetDevice> ()->GetRrc ();
+      PointerValue ptrOne;
+      rrc->GetAttribute ("SidelinkConfiguration", ptrOne);
+      Ptr<LteSlUeRrc> slUeRrc = ptrOne.Get<LteSlUeRrc> ();
+      PointerValue ptrTwo;
+      slUeRrc->GetAttribute ("SlController", ptrTwo);
+      Ptr<LteSlUeControllerCamad2019> ctlr = ptrTwo.Get<LteSlUeControllerCamad2019>();
+
+      ctlr->TraceConnectWithoutContext ("RemoteConnectionStart",
+                                        MakeBoundCallback (&TraceSinkRemoteConnectionStart,
+                                                           remoteConnectionEventsStream));
+      ctlr->TraceConnectWithoutContext ("RemoteConnectionEstablished",
+                                        MakeBoundCallback (&TraceSinkRemoteConnectionEstablished,
+                                                           remoteConnectionEventsStream));
     }
 
-  lteHelper->EnableSlRxPhyTraces ();
-  lteHelper->EnableSlPsschMacTraces ();
-  lteHelper->EnableSlPscchMacTraces ();
-  lteHelper->EnableSlPsdchMacTraces ();
-  lteHelper->EnableUlRxPhyTraces ();
-  lteHelper->EnableDlRxPhyTraces ();
+  for (uint32_t ueDevIdx = 0; ueDevIdx < allUeDevs.GetN (); ueDevIdx++)
+    {
+      Ptr<LteUeRrc> rrc = allUeDevs.Get (ueDevIdx)->GetObject<LteUeNetDevice> ()->GetRrc ();
+      PointerValue ptrOne;
+      rrc->GetAttribute ("SidelinkConfiguration", ptrOne);
+      Ptr<LteSlUeRrc> slUeRrc = ptrOne.Get<LteSlUeRrc> ();
+      slUeRrc->TraceConnectWithoutContext ("PC5SignalingPacketTrace",
+                                           MakeBoundCallback (&TraceSinkPC5SignalingPacketTrace,
+                                                              PC5SignalingPacketTraceStream));
+    }
+  ///*** End of Configure Relaying ***///
 
   NS_LOG_INFO ("Starting simulation...");
 

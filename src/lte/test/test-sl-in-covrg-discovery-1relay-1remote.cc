@@ -83,22 +83,22 @@ private:
   virtual void DoRun (void);
   double m_simTime; ///< simTime
   bool m_useModelB; ///< useModelB
-  
+
   /**
    * imsiRelayservicecode
    */
   struct imsiRelayservicecode
   {
-	  uint64_t imsi; ///< imsi
-	  uint32_t relayservicecode; ///< relayservicecode
+    uint64_t imsi;       ///< imsi
+    uint32_t relayservicecode;       ///< relayservicecode
   };
-  std::vector<imsiRelayservicecode> m_imsiRelayservicecodeVector; ///< imsiRelayservicecodeVector 
+  std::vector<imsiRelayservicecode> m_imsiRelayservicecodeVector; ///< imsiRelayservicecodeVector
 };
 
 SlInCovrgDiscovery1Relay1RemoteTestCase::SlInCovrgDiscovery1Relay1RemoteTestCase (double simTime, bool useModelB)
   : TestCase ("Scenario with 1 eNodeB and 2 UEs discovery using SideLink"),
-	m_simTime (simTime),
-	m_useModelB (useModelB)
+  m_simTime (simTime),
+  m_useModelB (useModelB)
 {
 }
 
@@ -106,31 +106,31 @@ SlInCovrgDiscovery1Relay1RemoteTestCase::~SlInCovrgDiscovery1Relay1RemoteTestCas
 {
 }
 
-void 
+void
 SlInCovrgDiscovery1Relay1RemoteTestCase::DiscoveryMonitoringCallback (uint64_t imsi, uint16_t cellId, uint16_t rnti, LteSlDiscHeader discMsg)
 {
-	bool found = false;
-	for (uint32_t i = 0; i < m_imsiRelayservicecodeVector.size(); i++)
-	{
-		if (m_imsiRelayservicecodeVector[i].imsi == imsi && m_imsiRelayservicecodeVector[i].relayservicecode == discMsg.GetRelayServiceCode())
-		{
-			found = true;
-			break;
-		}
-	}
-	
-	if (m_imsiRelayservicecodeVector.size() == 0 || !found)
-	{
-		imsiRelayservicecode iA;
-		iA.imsi = imsi;
-		iA.relayservicecode = discMsg.GetRelayServiceCode();
-		m_imsiRelayservicecodeVector.push_back (iA);
-	}
+  bool found = false;
+  for (uint32_t i = 0; i < m_imsiRelayservicecodeVector.size (); i++)
+    {
+      if (m_imsiRelayservicecodeVector[i].imsi == imsi && m_imsiRelayservicecodeVector[i].relayservicecode == discMsg.GetRelayServiceCode ())
+        {
+          found = true;
+          break;
+        }
+    }
+
+  if (m_imsiRelayservicecodeVector.size () == 0 || !found)
+    {
+      imsiRelayservicecode iA;
+      iA.imsi = imsi;
+      iA.relayservicecode = discMsg.GetRelayServiceCode ();
+      m_imsiRelayservicecodeVector.push_back (iA);
+    }
 }
 
 void
 SlInCovrgDiscovery1Relay1RemoteTestCase::DoRun (void)
-{  
+{
   Time simTime = Seconds (m_simTime);
 
   //Set the frequency
@@ -216,7 +216,7 @@ SlInCovrgDiscovery1Relay1RemoteTestCase::DoRun (void)
   pool.ueSelected.havePoolToAdd = true;
   pool.ueSelected.poolToAddModList.nbPools = 1;
   pool.ueSelected.poolToAddModList.pools[0].poolIdentity = 1;
-  
+
   LteSlDiscResourcePoolFactory pfactory;
   pfactory.SetDiscCpLen ("NORMAL");
   pfactory.SetDiscPeriod ("rf32");
@@ -228,7 +228,7 @@ SlInCovrgDiscovery1Relay1RemoteTestCase::DoRun (void)
   pfactory.SetDiscOffset (0);
   pfactory.SetDiscBitmap (0x11111);
   pfactory.SetDiscTxProbability ("p100");
-  
+
   pool.ueSelected.poolToAddModList.pools[0].pool =  pfactory.CreatePool ();
 
   //Install Sidelink configuration for eNBs
@@ -263,20 +263,20 @@ SlInCovrgDiscovery1Relay1RemoteTestCase::DoRun (void)
   lteHelper->Attach (ueDevs);
 
   NS_LOG_INFO ("Configuring discovery applications");
-  
+
   Ptr<LteUeNetDevice> ueNetDevice0 = DynamicCast<LteUeNetDevice> (ueDevs.Get (0));
   Ptr<LteUeNetDevice> ueNetDevice1 = DynamicCast<LteUeNetDevice> (ueDevs.Get (1));
   uint32_t relayServiceCode = 35;
   if (!m_useModelB)
-	{
-	  Simulator::Schedule (Seconds (2.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueNetDevice0, relayServiceCode, LteSlUeRrc::ModelA, LteSlUeRrc::RelayUE);
-	  Simulator::Schedule (Seconds (2.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueNetDevice1, relayServiceCode, LteSlUeRrc::ModelA, LteSlUeRrc::RemoteUE);
-	}
+    {
+      Simulator::Schedule (Seconds (2.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueNetDevice0, relayServiceCode, LteSlUeRrc::ModelA, LteSlUeRrc::RelayUE);
+      Simulator::Schedule (Seconds (2.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueNetDevice1, relayServiceCode, LteSlUeRrc::ModelA, LteSlUeRrc::RemoteUE);
+    }
   else
-	{
-	  Simulator::Schedule (Seconds (2.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueNetDevice0, relayServiceCode, LteSlUeRrc::ModelB, LteSlUeRrc::RelayUE);
-	  Simulator::Schedule (Seconds (2.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueNetDevice1, relayServiceCode, LteSlUeRrc::ModelB, LteSlUeRrc::RemoteUE);
-	}
+    {
+      Simulator::Schedule (Seconds (2.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueNetDevice0, relayServiceCode, LteSlUeRrc::ModelB, LteSlUeRrc::RelayUE);
+      Simulator::Schedule (Seconds (2.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueNetDevice1, relayServiceCode, LteSlUeRrc::ModelB, LteSlUeRrc::RemoteUE);
+    }
 
   ///*** End of application configuration ***///
 
@@ -288,23 +288,23 @@ SlInCovrgDiscovery1Relay1RemoteTestCase::DoRun (void)
 
   Simulator::Run ();
   Simulator::Destroy ();
-  
+
   bool allDiscovered = true;
   if (!m_useModelB)
-  {
-	  if (m_imsiRelayservicecodeVector.size() != (ueNodes.GetN () - 1))
-	  {
-		  allDiscovered = false;
-	  }
-  }
+    {
+      if (m_imsiRelayservicecodeVector.size () != (ueNodes.GetN () - 1))
+        {
+          allDiscovered = false;
+        }
+    }
   else
-  {
-	  if (m_imsiRelayservicecodeVector.size() != ueNodes.GetN ())
-	  {
-		  allDiscovered = false;
-	  }
-  }
-  
+    {
+      if (m_imsiRelayservicecodeVector.size () != ueNodes.GetN ())
+        {
+          allDiscovered = false;
+        }
+    }
+
   NS_TEST_ASSERT_MSG_EQ (allDiscovered, true, "Error in Remote UE being discovered by Relay UE. Test relay service discovery failed");
 }
 
@@ -323,10 +323,8 @@ public:
 SlInCovrgDiscovery1Relay1RemoteTestSuite::SlInCovrgDiscovery1Relay1RemoteTestSuite ()
   : TestSuite ("sl-in-covrg-discovery-1relay-1remote", SYSTEM)
 {
-  // LogComponentEnable ("TestSlInCovrgDiscovery1Relay1Remote", LOG_LEVEL_ALL);
-  
   //Test relay discovery model A and model B. one UE is relay and one is remote.
-  
+
   //Normal test case with default values
   //Pass the variables simTime, useModelB
   AddTestCase (new SlInCovrgDiscovery1Relay1RemoteTestCase (6.0, false), TestCase::QUICK);

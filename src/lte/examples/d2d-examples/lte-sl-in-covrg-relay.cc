@@ -131,19 +131,10 @@ int main (int argc, char *argv[])
   Config::SetDefault ("ns3::LteUePhy::DownlinkCqiPeriodicity", TimeValue (MilliSeconds (79)));
 
   //Configure One-To-One Communication timers and counters between Relay and Remote UE
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4111", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4103", DoubleValue (10));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4108", DoubleValue (10000));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dTRUIR", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_RUIR_maximum", DoubleValue (2));
-
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4100", DoubleValue (10000));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4101", DoubleValue (50000));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4102", DoubleValue (10000));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4103", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCR_maximum", DoubleValue (2));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCRq_maximum", DoubleValue (2));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCK_maximum", DoubleValue (2));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4108", UintegerValue (10000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4100", UintegerValue (10000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4101", UintegerValue (50000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4102", UintegerValue (10000));
 
   CommandLine cmd;
   cmd.Parse (argc, argv);
@@ -168,9 +159,6 @@ int main (int argc, char *argv[])
       LogComponentEnable ("LteEnbRrc", logLevel);
       LogComponentEnable ("LteSlEnbRrc", logLevel);
 
-      //LogComponentEnable ("LteSpectrumPhy", logLevel);
-      //LogComponentEnable ("LteUePhy", logLevel);
-      //LogComponentEnable ("LteEnbPhy", logLevel);
     }
 
   GlobalValue::GetValueByName ("simTime", timeValue);
@@ -292,8 +280,6 @@ int main (int argc, char *argv[])
   enbSidelinkConfiguration->AddPreconfiguredDedicatedPool (1, pool); //update to use L2ID for remote UE
   enbSidelinkConfiguration->AddPreconfiguredDedicatedPool (2, pool); //update to use L2ID for remote UE
 
-
-
   //discovery pool
   enbSidelinkConfiguration->SetDiscEnabled (true);
 
@@ -403,20 +389,9 @@ int main (int argc, char *argv[])
 
   Simulator::Schedule (Seconds (2.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueDevs.Get (0), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RelayUE);
 
-  //Simulator::Schedule (Seconds(4.0), &PointToPointEpcHelper::RemoteUeContextConnected, epcHelper, 1, 2, Ipv6Address("7777:f00e::2"));
-
   Simulator::Schedule (Seconds (4.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueDevs.Get (1), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RemoteUE);
 
   NS_LOG_INFO ("Enabling Sidelink traces...");
-
-  //lteHelper->EnableSlPscchMacTraces ();
-  //lteHelper->EnableSlPsschMacTraces ();
-
-  //lteHelper->EnableSlRxPhyTraces ();
-  //lteHelper->EnableSlPscchRxPhyTraces ();
-
-  //lteHelper->EnableSlPsdchMacTraces ();
-  //lteHelper->EnableDiscoveryMonitoringRrcTraces ();
 
   lteHelper->EnableTraces ();
 

@@ -68,7 +68,7 @@ class LteSlUeRrc : public Object
   /// allow LteSlUeController class friend access
   friend class LteSlUeController;
 
-  /** 
+  /**
    * Structure to store Sidelink configuration for a given plmnid
    */
   struct LteSlCellConfiguration
@@ -79,7 +79,7 @@ class LteSlUeRrc : public Object
     bool haveSib19; ///< Have SIB19 ?
     LteRrcSap::SystemInformationBlockType19 sib19; ///< SIB 19
   };
-  
+
 public:
   LteSlUeRrc ();
   virtual ~LteSlUeRrc (void);
@@ -299,10 +299,11 @@ public:
    */
   double GetTimeSinceLastTransmissionOfSidelinkUeInformation ();
   /**
-   * \brief Get next LCID function
+   * \brief Get next LCID for setting up SLRB towards the given destination
+   * \param dstL2Id The destination layer 2 ID
    * \return the next available LCID
    */
-  uint8_t GetNextLcid ();
+  uint8_t GetNextLcid (uint32_t dstL2Id);
   /**
    * \brief Is cell broadcasting SIB 18 function
    * Indicates if cell is broadcasting SIB 18
@@ -384,14 +385,13 @@ public:
    * \param proseRelayUeId The layer 2 ID for the relay node
    */
   void StartRelayDirectCommunication (uint32_t serviceCode, uint32_t proseRelayUeId);
-  
+
   /**
    * TracedCallback signature for reception of PC5 Signaling message.
    *
    * \param [in] p
    */
-  typedef void (* PC5SignalingPacketTracedCallback)
-    (uint32_t srcL2Id, uint32_t dstL2Id, Ptr<Packet> p);
+  typedef void (* PC5SignalingPacketTracedCallback)(uint32_t srcL2Id, uint32_t dstL2Id, Ptr<Packet> p);
 
 protected:
   /**
@@ -600,14 +600,14 @@ protected:
    * \param context The link context
    */
   void UpdateKeepAlive (Ptr<LteSlO2oCommParams> context);
-  
+
   /**
    * Release one-to-one communication for the given reason
    * \param context The link context
    * \param reason The reason for releasing the connection
    */
   void ReleaseO2OConnection (Ptr<LteSlO2oCommParams> context, LteSlO2oCommParams::UeO2OReleaseReason reason);
-  
+
   /**
    * Gets the context for processing the packet received from a peer node
    * \param peerUeId The remote peer that sent the packet
@@ -654,9 +654,9 @@ private:
    */
   std::map <uint16_t, LteSlCellConfiguration> m_slMap;
   /**
-   * Map between source, group, and radio bearer for transmissions
+   * Map between source, destination, and radio bearer for transmissions
    */
-  std::map <uint32_t, std::map <uint32_t, Ptr<LteSidelinkRadioBearerInfo> > > m_slrbMap;
+  std::map <uint32_t, std::map <uint32_t, std::list < Ptr<LteSidelinkRadioBearerInfo> > > > m_slrbMap;
   /**
    * The time the last SidelinkUeInformation was sent
    */
@@ -707,11 +707,11 @@ private:
   uint16_t m_discInterFreq;
 
   Ptr<UniformRandomVariable> m_rand; ///< Uniform random variable
-  
+
   /**
    * One to One Communication Contexts for this particular UE
    */
-  
+
   std::map< LteSlO2oCommParams::LteSlPc5ContextId, Ptr<LteSlO2oCommParams> > m_o2oCommContexts;
   /**
    * Map of L2Id and corresponding IMSI for this particular UE
@@ -722,7 +722,7 @@ private:
    * Logic for sidelink
    */
   Ptr<LteSlUeController> m_controller;
-  
+
   /**
    * Frequency of Model B Relay Discovery Solicitation messages (number of discovery periods)
    */
@@ -733,14 +733,12 @@ private:
    * Exporting PC5 Signaling packet.
    */
   TracedCallback< uint32_t, uint32_t, Ptr<Packet> > m_pc5SignalingPacketTrace;
-  
+
   /**
    * Sequence number for PC5 signaling messages
    */
   uint32_t m_pc5SignalingSeqNum;
-  
-  
-  
+
 };     //end of LteSlUeRrc'class
 
 } // namespace ns3

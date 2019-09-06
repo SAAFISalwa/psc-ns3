@@ -1,36 +1,20 @@
 /* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
 /*
- * NIST-developed software is provided by NIST as a public
- * service. You may use, copy and distribute copies of the software in
- * any medium, provided that you keep intact this entire notice. You
- * may improve, modify and create derivative works of the software or
- * any portion of the software, and you may copy and distribute such
- * modifications or works. Modified works should carry a notice
- * stating that you changed the software and should note the date and
- * nature of any such change. Please explicitly acknowledge the
- * National Institute of Standards and Technology as the source of the
- * software.
+ * Copyright (c) 2011, 2012 Centre Tecnologic de Telecomunicacions de Catalunya (CTTC)
  *
- * NIST-developed software is expressly provided "AS IS." NIST MAKES
- * NO WARRANTY OF ANY KIND, EXPRESS, IMPLIED, IN FACT OR ARISING BY
- * OPERATION OF LAW, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
- * WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
- * NON-INFRINGEMENT AND DATA ACCURACY. NIST NEITHER REPRESENTS NOR
- * WARRANTS THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED
- * OR ERROR-FREE, OR THAT ANY DEFECTS WILL BE CORRECTED. NIST DOES NOT
- * WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE OF THE
- * SOFTWARE OR THE RESULTS THEREOF, INCLUDING BUT NOT LIMITED TO THE
- * CORRECTNESS, ACCURACY, RELIABILITY, OR USEFULNESS OF THE SOFTWARE.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation;
  *
- * You are solely responsible for determining the appropriateness of
- * using and distributing the software and you assume all risks
- * associated with its use, including but not limited to the risks and
- * costs of program errors, compliance with applicable laws, damage to
- * or loss of data, programs or equipment, and the unavailability or
- * interruption of operation. This software is not intended to be used
- * in any situation where a failure could cause risk of injury or
- * damage to property. The software developed by NIST employees is not
- * subject to copyright protection within the United States.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
 #ifndef LTE_SL_O2O_COMM_PARAMS_H
@@ -72,41 +56,18 @@ public:
   };
 
   /**
-   * Constructor
+   * The state of the direct security mode procedure
    */
-  LteSlO2oCommParams ();
+  enum DirectSecurityModeState
+  {
+    EMPTY = 0,
+    COMMANDED,
+    COMPLETED,
+  };
 
   /**
-   * Destructor
+   * The Relay or Remote UE states
    */
-  virtual ~LteSlO2oCommParams ();
-
-/**
- * Set the context ID
- * @param contextId The context ID
- */
-  void SetContextId (LteSlPc5ContextId contextId);
-
-/**
- * Get the context ID
- * \return The context ID
- */
-  LteSlPc5ContextId GetContextId ();
-
-/**
- * Clears all pending timers
- */
-  void ClearTimers ();
-
-// inherited from Object
-private:
-  virtual void DoInitialize (void);
-  virtual void DoDispose (void);
-
-public:
-/**
- * The Relay or Remote UE states
- */
   enum UeO2OCommState
   {
     RELAY_IDLE = 0,
@@ -121,10 +82,220 @@ public:
     //REMOTE_CHECK_LINK,
     REMOTE_INIT_RELEASE
   };
+  /**
+   * Constructor
+   */
+  LteSlO2oCommParams ();
+
+  /**
+   * Destructor
+   */
+  virtual ~LteSlO2oCommParams ();
 
 /**
- * The possible reasons for rejecting a request from a remote UE
+ * Clears all pending timers
  */
+  void ClearTimers ();
+
+// inherited from Object
+private:
+  virtual void DoInitialize (void);
+  virtual void DoDispose (void);
+
+  /**
+   * The duration value (in ms) for T4111 timer
+   */
+  uint32_t m_relay_dT4111;
+
+  /**
+   * The duration value (in ms) for T4103 timer
+   */
+  uint32_t m_relay_dT4103;
+
+  /**
+   * The duration value (in ms) for T4108 timer
+   */
+  uint32_t m_relay_dT4108;
+
+  /**
+   * The duration value (in ms) for TRUIR timer
+   */
+  uint32_t m_relay_dTRUIR;
+
+  /**
+   * T4111 timer
+   */
+  Timer* m_relay_T4111;
+
+  /**
+   * T4103 timer
+   */
+  Timer* m_relay_T4103;
+
+  /**
+   * T4108 timer
+   */
+  Timer* m_relay_T4108;
+
+  /**
+   * TRUIR timer
+   */
+  Timer* m_relay_TRUIR;
+
+  /**
+   * The duration value (in ms) for T4100 timer
+   */
+  uint32_t m_remote_dT4100;
+
+  /**
+   * The duration value (in ms) for T4101 timer
+   */
+  uint32_t m_remote_dT4101;
+
+  /**
+   * The duration value (in ms) for T4102 timer
+   */
+  uint32_t m_remote_dT4102;
+  /**
+   * The duration value (in ms) for T4103 timer
+   */
+  uint32_t m_remote_dT4103;
+
+  /**
+   * T4100 timer
+   */
+  Timer* m_remote_T4100;
+
+  /**
+   * T4101 timer
+   */
+  Timer* m_remote_T4101;
+
+  /**
+   * T4102 timer
+   */
+  Timer* m_remote_T4102;
+
+  /**
+   * T4103 timer
+   */
+  Timer* m_remote_T4103;
+
+  /**
+   * The maximum values for DCR counter
+   */
+  uint32_t m_relay_DCR_maximum;
+
+  /**
+   * The maximum values for RUIR counter
+   */
+  uint32_t m_relay_RUIR_maximum;
+
+  /**
+   * The maximum values for DCR counter
+   */
+  uint32_t m_remote_DCR_maximum;
+
+  /**
+   * The maximum values for DCRq counter
+   */
+  uint32_t m_remote_DCRq_maximum;
+
+  /**
+   * The maximum values for DCK counter
+   */
+  uint32_t m_remote_DCK_maximum;
+
+  /**
+   * The DCR counter for relay UE
+   */
+  uint16_t m_relay_DCR_count;
+
+  /**
+   * The RUIR counter
+   */
+  uint16_t m_relay_RUIR_count;
+
+  /**
+   * The DCR counter for remote UE
+   */
+  uint16_t m_remote_DCR_count;
+
+  /**
+   * The DCRq counter
+   */
+  uint16_t m_remote_DCRq_count;
+
+  /**
+   * The DCK counter
+   */
+  uint16_t m_remote_DCK_count;
+
+  /**
+   * The KA counter
+   */
+  uint16_t m_remote_ka_count;
+
+  /**
+   * Contains the copy of DirectCommunicationRequest for further retransmissions
+   */
+  DirectCommunicationRequest m_dcrq_retrans;
+
+  /**
+   * Contains the copy of DirectCommunicationRelease for further retransmissions
+   */
+  DirectCommunicationRelease m_dcr_retrans;
+
+  /**
+   * Contains the copy of DirectCommunicationKeepalive for further retransmissions
+   */
+  DirectCommunicationKeepalive m_dck_retrans;
+
+  /**
+   * Contains the copy of RemoteUeInfoRequest for further retransmissions
+   */
+  RemoteUeInfoRequest m_ruirq_retrans;
+
+  /**
+   * Contains the copy of DirectSecurityModeCommand for further retransmissions
+   */
+  DirectSecurityModeCommand m_dsmcm_retrans;
+
+  /**
+   * Flag to identify if the direct security mode control state of this context
+   */
+  DirectSecurityModeState m_security_mode_state;
+
+  /**
+   * ID to identify the security mode control related to a request
+   */
+  uint8_t m_security_mode_id;
+
+  /**
+   * The context identifier
+   */
+  LteSlPc5ContextId m_contextId;
+
+  /**
+   * The current state of the remote or relay UE
+   */
+  UeO2OCommState m_state;
+
+  /**
+   * String representation of the current state
+   */
+  std::vector <std::string> m_stateString;
+
+public:
+  /**
+   * \brief Get the type ID.
+   * \return the object TypeId
+   */
+  static TypeId GetTypeId (void);
+
+  /**
+   * The possible reasons for rejecting a request from a remote UE
+   */
   enum UeO2ORejectReason
   {
     COMM_NOT_ALLOWED = 1,
@@ -135,19 +306,9 @@ public:
     OTHER_ERRORS
   };
 
-/**
- * The state of the direct security mode procedure
- */
-  enum DirectSecurityModeState
-  {
-    EMPTY = 0,
-    COMMANDED,
-    COMPLETED,
-  };
-
-/**
- * The possible reasons for releasing a link
- */
+  /**
+   * The possible reasons for releasing a link
+   */
   enum UeO2OReleaseReason
   {
     COMM_NO_LONGER_NEEDED = 1,
@@ -155,196 +316,321 @@ public:
     COMM_NO_LONGER_AVAILABLE
   };
 
-/**
- * The current state of the remote or relay UE
- */
-  UeO2OCommState state;
+  /**
+   * Set the duration value (in ms) for T4111 timer
+   *
+   * \param duration the duration value (in ms) for T4111 timer
+   */
+  void SetRelayT4111Duration (uint32_t duration);
 
-/**
- * String representation of the current state
- */
-  std::vector <std::string> stateString;
 
-/**
- * The duration value (in ms) for T4111 timer
- */
-  uint16_t relay_dT4111;
+  /**
+   * Set the duration value (in ms) for T4103 timer
+   *
+   * \param duration the duration value (in ms) for T4103 timer
+   */
+  void SetRelayT4103Duration (uint32_t duration);
 
-/**
- * The duration value (in ms) for T4103 timer
- */
-  uint16_t relay_dT4103;
 
-/**
- * The duration value (in ms) for T4108 timer
- */
-  uint16_t relay_dT4108;
+  /**
+   * Set the duration value (in ms) for T4108 timer
+   *
+   * \param duration the duration value (in ms) for T4108 timer
+   */
+  void SetRelayT4108Duration (uint32_t duration);
 
-/**
- * The duration value (in ms) for TRUIR timer
- */
-  uint16_t relay_dTRUIR;
 
-/**
- * T4111 timer
- */
-  Timer relay_T4111;
+  /**
+   * Set the duration value (in ms) for TRUIR timer
+   *
+   * \param duration the duration value (in ms) for TRUIR timer
+   */
+  void SetRelayTRUIRDuration (uint32_t duration);
 
-/**
- * T4103 timer
- */
-  Timer relay_T4103;
+  /**
+   *
+   * \return T4111 timer for Relay UE
+   */
+  Timer* GetRelayT4111 (void);
 
-/**
- * T4108 timer
- */
-  Timer relay_T4108;
+  /**
+   *
+   * \return T4103 timer for Relay UE
+   */
+  Timer* GetRelayT4103 (void);
 
-/**
- * TRUIR timer
- */
-  Timer relay_TRUIR;
+  /**
+   *
+   * \return T4108 timer for Relay UE
+   */
+  Timer* GetRelayT4108 (void);
 
-/**
- * The duration value (in ms) for T4100 timer
- */
-  uint16_t remote_dT4100;
+  /**
+   *
+   * \return TRUIR timer for Relay UE
+   */
+  Timer* GetRelayTRUIR (void);
 
-/**
- * The duration value (in ms) for T4101 timer
- */
-  uint16_t remote_dT4101;
+  /**
+   * Set the duration value (in ms) for T4100 timer
+   *
+   * \param duration the duration value (in ms) for T4100 timer
+   */
+  void SetRemoteT4100Duration (uint32_t duration);
 
-/**
- * The duration value (in ms) for T4102 timer
- */
-  uint16_t remote_dT4102;
+  /**
+   * Set the duration value (in ms) for T4101 timer
+   *
+   * \param duration the duration value (in ms) for T4101 timer
+   */
+  void SetRemoteT4101Duration (uint32_t duration);
 
-/**
- * The duration value (in ms) for T4103 timer
- */
-  uint16_t remote_dT4103;
+  /**
+   * Set the duration value (in ms) for T4102 timer
+   *
+   * \param duration the duration value (in ms) for T4102 timer
+   */
+  void SetRemoteT4102Duration (uint32_t duration);
 
-/**
- * T4100 timer
- */
-  Timer remote_T4100;
+  /**
+   * Set the duration value (in ms) for T4103 timer
+   *
+   * \param duration the duration value (in ms) for T4103 timer
+   */
+  void SetRemoteT4103Duration (uint32_t duration);
 
-/**
- * T4101 timer
- */
-  Timer remote_T4101;
+  /**
+   *
+   * \return T4100 timer for Remote UE
+   */
+  Timer* GetRemoteT4100 (void);
 
-/**
- * T4102 timer
- */
-  Timer remote_T4102;
+  /**
+   *
+   * \return T4101 timer for Remote UE
+   */
+  Timer* GetRemoteT4101 (void);
 
-/**
- * T4103 timer
- */
-  Timer remote_T4103;
+  /**
+   *
+   * \return T4102 timer for Remote UE
+   */
+  Timer* GetRemoteT4102 (void);
 
-/**
- * The maximum values for DCR counter
- */
-  uint16_t relay_DCR_maximum;
+  /**
+   *
+   * \return T4103 timer for Remote UE
+   */
+  Timer* GetRemoteT4103 (void);
 
-/**
- * The maximum values for RUIR counter
- */
-  uint16_t relay_RUIR_maximum;
+  /**
+   *
+   * \return relay_DCR_maximum The maximum values for DCR counter
+   */
+  uint32_t GetRelayDcrMax (void) const;
 
-/**
- * The maximum values for DCR counter
- */
-  uint16_t remote_DCR_maximum;
+  /**
+   *
+   * \return relay_RUIR_maximum he maximum values for RUIR counter
+   */
+  uint32_t GetRelayRuirMax (void) const;
 
-/**
- * The maximum values for DCRq counter
- */
-  uint16_t remote_DCRq_maximum;
+  /**
+   *
+   * \return remote_DCR_maximum The maximum values for DCR counter
+   */
+  uint32_t GetRemoteDcrMax (void) const;
 
-/**
- * The maximum values for DCK counter
- */
-  uint16_t remote_DCK_maximum;
+  /**
+   *
+   * \return remote_DCRq_maximum The maximum values for DCRq counter
+   */
+  uint32_t GetRemoteDcrqMax (void) const;
 
-/**
- * The DCR counter for relay UE
- */
-  uint16_t relay_DCR_count;
+  /**
+   *
+   * \return remote_DCK_maximum  The maximum values for DCK counter
+   */
+  uint32_t GetRemoteDckMax (void) const;
 
-/**
- * The RUIR counter
- */
-  uint16_t relay_RUIR_count;
+  /**
+   *
+   * \return relay_DCR_count The DCR counter for relay UE
+   */
+  uint16_t GetRelayDcrCount (void) const;
+  /**
+   *
+   * \param value The DCR counter value to set for relay UE
+   */
+  void SetRelayDcrCount (uint16_t value);
 
-/**
- * The DCR counter for remote UE
- */
-  uint16_t remote_DCR_count;
+  /**
+   *
+   * \return relay_RUIR_count The RUIR counter
+   */
+  uint16_t GetRelayRuirCount (void) const;
+  /**
+   *
+   * \param value The RUIR counter value to set for relay UE
+   */
+  void SetRelayRuirCount (uint16_t value);
 
-/**
- * The DCRq counter
- */
-  uint16_t remote_DCRq_count;
+  /**
+   *
+   * \return remote_DCR_count The DCR counter for remote UE
+   */
+  uint16_t GetRemoteDcrCount (void) const;
+  /**
+   *
+   * \param value The DCR counter value to set for remote UE
+   */
+  void SetRemoteDcrCount (uint16_t value);
 
-/**
- * The DCK counter
- */
-  uint16_t remote_DCK_count;
+  /**
+   *
+   * \return remote_DCRq_count The DCR counter for remote UE
+   */
+  uint16_t GetRemoteDcrqCount (void) const;
+  /**
+   *
+   * \param value The DCRq counter value to set for remote UE
+   */
+  void SetRemoteDcrqCount (uint16_t value);
 
-/**
- * The KA counter
- */
-  uint16_t remote_ka_count;
+  /**
+   *
+   * \return remote_DCK_count The DCK counter for remote UE
+   */
+  uint16_t GetRemoteDckCount (void) const;
+  /**
+   *
+   * \param value The DCK counter value to set for remote UE
+   */
+  void SetRemoteDckCount (uint16_t value);
 
-/**
- * Contains the copy of DirectCommunicationRequest for further retransmissions
- */
-  DirectCommunicationRequest dcrq_retrans;
+  /**
+   *
+   * \return remote_ka_count The KA counter for remote UE
+   */
+  uint16_t GetRemoteKaCount (void) const;
+  /**
+   *
+   * \param value The KA counter value to set for remote UE
+   */
+  void SetRemoteKaCount (uint16_t value);
 
-/**
- * Contains the copy of DirectCommunicationRelease for further retransmissions
- */
-  DirectCommunicationRelease dcr_retrans;
+  /**
+   *
+   * \return dcrq_retrans the copy of DirectCommunicationRequest
+   */
+  DirectCommunicationRequest GetDcrqRetrans (void) const;
+  /**
+   *
+   * \param value the copy of DirectCommunicationRequest for further retransmissions
+   */
+  void SetDcrqRetrans (DirectCommunicationRequest value);
 
-/**
- * Contains the copy of DirectCommunicationKeepalive for further retransmissions
- */
-  DirectCommunicationKeepalive dck_retrans;
+  /**
+   *
+   * \return dcr_retrans the copy of DirectCommunicationRelease
+   */
+  DirectCommunicationRelease GetDcrRetrans (void) const;
 
-/**
- * Contains the copy of RemoteUeInfoRequest for further retransmissions
- */
-  RemoteUeInfoRequest ruirq_retrans;
+  /**
+   *
+   * \param value the copy of DirectCommunicationRelease for further retransmissions
+   */
+  void SetDcrRetrans (DirectCommunicationRelease value);
 
-/**
- * Contains the copy of DirectSecurityModeCommand for further retransmissions
- */
-  DirectSecurityModeCommand dsmcm_retrans;
+  /**
+   *
+   * \return dck_retrans the copy of DirectCommunicationKeepalive
+   */
+  DirectCommunicationKeepalive GetDckRetrans (void) const;
+  /**
+   *
+   * \param value the copy of DirectCommunicationKeepalive for further retransmissions
+   */
+  void SetDckRetrans (DirectCommunicationKeepalive value);
 
- /**
-  * Flag to identify if the direct security mode control state of this context
-  */
-  DirectSecurityModeState security_mode_state;
+  /**
+   *
+   * \return ruirq_retrans the copy of RemoteUeInfoRequest
+   */
+  RemoteUeInfoRequest GetRuirqRetrans (void) const;
+  /**
+   *
+   * \param value the copy of RemoteUeInfoRequest for further retransmissions
+   */
+  void SetRuirqRetrans (RemoteUeInfoRequest value);
 
- /**
-  * ID to identify the security mode control related to a request TODO: Elaborate!
-  */
-  uint8_t security_mode_id;
+  /**
+   *
+   * \return dsmcm_retrans the copy of DirectSecurityModeCommand
+   */
+  DirectSecurityModeCommand GetDsmcmRetrans (void) const;
+  /**
+   *
+   * \param value the copy of DirectSecurityModeCommand for further retransmissions
+   */
+  void SetDsmcmRetrans (DirectSecurityModeCommand value);
+  /**
+   *
+   * \param lsb LSB to be set on the copy of DirectSecurityModeCommand for further retransmissions
+   */
+  void SetDsmcmRetransLsb (uint8_t lsb);
 
-/**
- * \brief Get the type ID.
- * \return the object TypeId
- */
-  static TypeId GetTypeId (void);
+  /**
+    *
+    * \return security_mode_state the flag to identify if the direct security mode control state of this context
+    */
+  DirectSecurityModeState GetSecurityModeState (void) const;
+  /**
+   *
+   * \param value the flag value to be set to identify if the direct security mode control state of this context
+   */
+  void SetSecurityModeState (DirectSecurityModeState value);
 
-/**
- * The context identifier
- */
-  LteSlPc5ContextId m_contextId;
+  /**
+    *
+    * \return security_mode_id ID to identify the security mode control related to a request
+    */
+  uint8_t GetSecurityModeId (void) const;
+
+  /**
+   *
+   * \param value the ID to be set to identify the security mode control related to a request
+   */
+  void SetSecurityModeId (uint8_t value);
+
+  /**
+   * Set the context ID
+   * \param contextId The context ID
+   */
+  void SetContextId (LteSlPc5ContextId contextId);
+
+  /**
+   * Get the context ID
+   * \return The context ID
+   */
+  LteSlPc5ContextId GetContextId ();
+
+  /**
+   *
+   * \return state The current state of the remote or relay UE
+   */
+  UeO2OCommState GetState (void) const;
+  /**
+   *
+   * \param value The current state of the remote or relay UE to be set
+   */
+  void SetState (UeO2OCommState value);
+
+  /**
+   *
+   * \return stateString String representation of the current state
+   */
+  std::string GetStateString (UeO2OCommState value);
 
 };
 

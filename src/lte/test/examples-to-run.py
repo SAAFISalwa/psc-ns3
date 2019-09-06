@@ -68,6 +68,8 @@ cpp_examples = [
     ("lte-sl-out-of-covrg-synch --simTime=10 --enableNsLogs=0 --useIPv6=1", "True", "True"),
     ("lte-sl-out-of-covrg-synch-twotx --simTime=10 --enableNsLogs=0 --useIPv6=0", "True", "True"),
     ("lte-sl-out-of-covrg-synch-twotx --simTime=10 --enableNsLogs=0 --useIPv6=1", "True", "True"),
+    ("lte-sl-relay-generic", "True", "True"),
+    ("lte-sl-relay-cluster", "True", "True"),
 ]
 
 # A list of Python examples to run in order to ensure that they remain

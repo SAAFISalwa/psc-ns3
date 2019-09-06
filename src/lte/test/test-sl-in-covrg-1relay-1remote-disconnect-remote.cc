@@ -88,11 +88,11 @@ private:
 
 SlInCovrg1Relay1RemoteDisconnectRemoteTestCase::SlInCovrg1Relay1RemoteDisconnectRemoteTestCase (double simTime)
   : TestCase ("Scenario with 1 eNodeB and 2 UEs using SideLink"),
-	m_simTime (simTime),
-	m_recvDCR (false),
-	m_recvDCRA (false),
-	m_srcL2IdToCompareLater (0),
-	m_dstL2IdToCompareLater (0)
+  m_simTime (simTime),
+  m_recvDCR (false),
+  m_recvDCRA (false),
+  m_srcL2IdToCompareLater (0),
+  m_dstL2IdToCompareLater (0)
 {
 }
 
@@ -100,52 +100,43 @@ SlInCovrg1Relay1RemoteDisconnectRemoteTestCase::~SlInCovrg1Relay1RemoteDisconnec
 {
 }
 
-void 
+void
 SlInCovrg1Relay1RemoteDisconnectRemoteTestCase::PC5SignalingPacketTraceFunction (uint32_t srcL2Id, uint32_t dstL2Id, Ptr<Packet> p)
 {
-	LteSlPc5SignallingMessageType lpc5smt;
-	p->PeekHeader (lpc5smt);
-	
-	if (lpc5smt.GetMessageType () == LteSlPc5SignallingMessageType::DirectCommunicationRelease)
-	{
-		m_srcL2IdToCompareLater = srcL2Id;
-		m_dstL2IdToCompareLater = dstL2Id;
-		m_recvDCR = true;
-	}
-	
-	if (lpc5smt.GetMessageType () == LteSlPc5SignallingMessageType::DirectCommunicationReleaseAccept)
-	{
-		if ((srcL2Id == m_dstL2IdToCompareLater) && (dstL2Id == m_srcL2IdToCompareLater))
-		{
-			m_recvDCRA = true;
-		}
-	}
-	
+  LteSlPc5SignallingMessageType lpc5smt;
+  p->PeekHeader (lpc5smt);
+
+  if (lpc5smt.GetMessageType () == LteSlPc5SignallingMessageType::DirectCommunicationRelease)
+    {
+      m_srcL2IdToCompareLater = srcL2Id;
+      m_dstL2IdToCompareLater = dstL2Id;
+      m_recvDCR = true;
+    }
+
+  if (lpc5smt.GetMessageType () == LteSlPc5SignallingMessageType::DirectCommunicationReleaseAccept)
+    {
+      if ((srcL2Id == m_dstL2IdToCompareLater) && (dstL2Id == m_srcL2IdToCompareLater))
+        {
+          m_recvDCRA = true;
+        }
+    }
+
 }
 
 void
 SlInCovrg1Relay1RemoteDisconnectRemoteTestCase::DoRun (void)
-{  
+{
   Time simTime = Seconds (m_simTime);
   bool useRelay = true;
   double relayUeInitXPos = 300.0;
   double remoteUeInitXPos = 500.0;
-  
-  //Configure One-To-One Communication timers and counters between Relay and Remote UE
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4111", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4103", DoubleValue (10));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4108", DoubleValue (10000));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dTRUIR", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_RUIR_maximum", DoubleValue (2));
 
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4100", DoubleValue (10000));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4101", DoubleValue (50000));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4102", DoubleValue (10000));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4103", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCR_maximum", DoubleValue (2));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCRq_maximum", DoubleValue (2));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCK_maximum", DoubleValue (2));
-  
+  //Configure One-To-One Communication timers and counters between Relay and Remote UE
+  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4108", UintegerValue (10000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4100", UintegerValue (10000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4101", UintegerValue (50000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4102", UintegerValue (10000));
+
   //Configure the UE for UE_SELECTED scenario
   Config::SetDefault ("ns3::LteUeMac::SlGrantMcs", UintegerValue (16));
   Config::SetDefault ("ns3::LteUeMac::SlGrantSize", UintegerValue (6)); //The number of RBs allocated per UE for Sidelink
@@ -165,7 +156,6 @@ SlInCovrg1Relay1RemoteDisconnectRemoteTestCase::DoRun (void)
   Config::SetDefault ("ns3::LteSpectrumPhy::CtrlFullDuplexEnabled", BooleanValue (true));
   Config::SetDefault ("ns3::LteSpectrumPhy::DropRbOnCollisionEnabled", BooleanValue (false));
   Config::SetDefault ("ns3::LteUePhy::DownlinkCqiPeriodicity", TimeValue (MilliSeconds (79)));
-
 
   //Set the UEs power in dBm
   Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
@@ -243,7 +233,6 @@ SlInCovrg1Relay1RemoteDisconnectRemoteTestCase::DoRun (void)
   mobilityUe2.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobilityUe2.SetPositionAllocator (positionAllocUe2);
   mobilityUe2.Install (ueNodes.Get (1));
-
 
   //Install LTE devices to the nodes
   NetDeviceContainer enbDevs = lteHelper->InstallEnbDevice (enbNode);
@@ -363,7 +352,7 @@ SlInCovrg1Relay1RemoteDisconnectRemoteTestCase::DoRun (void)
 
   //Set echo server in the remote host
   UdpEchoServerHelper echoServer (echoPort);
-  ApplicationContainer serverApps = echoServer.Install (remoteHost); 
+  ApplicationContainer serverApps = echoServer.Install (remoteHost);
   serverApps.Start (Seconds (1.0));
   serverApps.Stop (simTime);
 
@@ -378,7 +367,6 @@ SlInCovrg1Relay1RemoteDisconnectRemoteTestCase::DoRun (void)
   clientApps.Stop (simTime);
   ///*** End of application configuration ***///
 
-
   ///*** Configure Relaying ***///
   if (useRelay)
     {
@@ -392,18 +380,18 @@ SlInCovrg1Relay1RemoteDisconnectRemoteTestCase::DoRun (void)
 
       Simulator::Schedule (Seconds (2.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueDevs.Get (0), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RelayUE);
       Simulator::Schedule (Seconds (4.0), &LteSidelinkHelper::StartRelayService, proseHelper, ueDevs.Get (1), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RemoteUE);
-	  Simulator::Schedule (Seconds (7.0), &LteSidelinkHelper::StopRelayService, proseHelper, ueDevs.Get (1), 33);
+      Simulator::Schedule (Seconds (7.0), &LteSidelinkHelper::StopRelayService, proseHelper, ueDevs.Get (1), 33);
     }
-  
+
   Config::ConnectWithoutContext ("/NodeList/*/DeviceList/*/LteUeRrc/SidelinkConfiguration/PC5SignalingPacketTrace", MakeCallback (&SlInCovrg1Relay1RemoteDisconnectRemoteTestCase::PC5SignalingPacketTraceFunction, this));
-  
+
   NS_LOG_INFO ("Starting simulation...");
 
   Simulator::Stop (simTime);
 
   Simulator::Run ();
-  Simulator::Destroy ();  
-  
+  Simulator::Destroy ();
+
   NS_TEST_ASSERT_MSG_EQ ((m_recvDCR && m_recvDCRA), true, "Error in sending and receiving DirectCommunicationRelease and DirectCommunicationReleaseAccept. Test stopping relay service failed");
 }
 
@@ -422,8 +410,6 @@ public:
 SlInCovrg1Relay1RemoteDisconnectRemoteTestSuite::SlInCovrg1Relay1RemoteDisconnectRemoteTestSuite ()
   : TestSuite ("sl-in-covrg-1relay-1remote-disconnect-remote", SYSTEM)
 {
-  // LogComponentEnable ("TestSlInCovrg1Relay1RemoteDisconnectRemote", LOG_LEVEL_ALL);
-  
   //Test stopping relay service
   //Remote UE stops wanting to use relay UE.
   //Pass the variables simTime

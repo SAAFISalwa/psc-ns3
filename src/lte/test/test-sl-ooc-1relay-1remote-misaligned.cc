@@ -116,16 +116,16 @@ private:
 
 SlOoc1Relay1RemoteMisalignedTestCase::SlOoc1Relay1RemoteMisalignedTestCase (double simTime, double echoClientMaxPackets, double echoClientInterval, double echoClientPacketSize, LteRrcSap::SlPreconfiguration preconfigurationRemote)
   : TestCase ("Scenario with 1 eNodeB and 2 UEs using SideLink"),
-    m_simTime (simTime),
-    m_echoClientMaxPackets (echoClientMaxPackets),
-    m_echoClientInterval (echoClientInterval),
-    m_echoClientPacketSize (echoClientPacketSize),
-    m_recvRUIRq (false),
-    m_recvRUIRs (false),
-    m_srcL2IdToCompareLater (0),
-    m_dstL2IdToCompareLater (0),
-    m_txPacket (false),
-    m_rxPacket (false)
+  m_simTime (simTime),
+  m_echoClientMaxPackets (echoClientMaxPackets),
+  m_echoClientInterval (echoClientInterval),
+  m_echoClientPacketSize (echoClientPacketSize),
+  m_recvRUIRq (false),
+  m_recvRUIRs (false),
+  m_srcL2IdToCompareLater (0),
+  m_dstL2IdToCompareLater (0),
+  m_txPacket (false),
+  m_rxPacket (false)
 {
   m_preconfigurationRemote = preconfigurationRemote;
   m_srcAddressToCompareLater = Ipv6Address::GetOnes ();
@@ -186,19 +186,10 @@ SlOoc1Relay1RemoteMisalignedTestCase::DoRun (void)
   double remoteUeInitXPos = 500.0;
 
   //Configure One-To-One Communication timers and counters between Relay and Remote UE
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4111", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4103", DoubleValue (10));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4108", DoubleValue (10000));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dTRUIR", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_RUIR_maximum", DoubleValue (2));
-
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4100", DoubleValue (10000));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4101", DoubleValue (50000));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4102", DoubleValue (1000));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4103", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCR_maximum", DoubleValue (2));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCRq_maximum", DoubleValue (2));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCK_maximum", DoubleValue (2));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4108", UintegerValue (10000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4100", UintegerValue (10000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4101", UintegerValue (50000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4102", UintegerValue (1000));
 
   //Configure the UE for UE_SELECTED scenario
   Config::SetDefault ("ns3::LteUeMac::SlGrantMcs", UintegerValue (16));
@@ -219,7 +210,6 @@ SlOoc1Relay1RemoteMisalignedTestCase::DoRun (void)
   Config::SetDefault ("ns3::LteSpectrumPhy::CtrlFullDuplexEnabled", BooleanValue (true));
   Config::SetDefault ("ns3::LteSpectrumPhy::DropRbOnCollisionEnabled", BooleanValue (false));
   Config::SetDefault ("ns3::LteUePhy::DownlinkCqiPeriodicity", TimeValue (MilliSeconds (79)));
-
 
   //Set the UEs power in dBm
   Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
@@ -297,7 +287,6 @@ SlOoc1Relay1RemoteMisalignedTestCase::DoRun (void)
   mobilityUe2.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobilityUe2.SetPositionAllocator (positionAllocUe2);
   mobilityUe2.Install (ueNodes.Get (1));
-
 
   //Install LTE devices to the nodes
   NetDeviceContainer enbDevs = lteHelper->InstallEnbDevice (enbNode);
@@ -392,7 +381,6 @@ SlOoc1Relay1RemoteMisalignedTestCase::DoRun (void)
   ueSidelinkConfiguration->SetSlPreconfiguration (preconfigurationRemote);
   lteHelper->InstallSidelinkConfiguration (ueDevs.Get (1), ueSidelinkConfiguration);
 
-
   //Install the IP stack on the UEs and assign IP address
   internet.Install (ueNodes);
   Ipv6InterfaceContainer ueIpIface;
@@ -452,7 +440,6 @@ SlOoc1Relay1RemoteMisalignedTestCase::DoRun (void)
   clientApps.Stop (simTime);
   ///*** End of application configuration ***///
 
-
   ///*** Configure Relaying ***///
   if (useRelay)
     {
@@ -469,12 +456,14 @@ SlOoc1Relay1RemoteMisalignedTestCase::DoRun (void)
     }
 
   Config::ConnectWithoutContext ("/NodeList/*/DeviceList/*/LteUeRrc/SidelinkConfiguration/PC5SignalingPacketTrace", MakeCallback (&SlOoc1Relay1RemoteMisalignedTestCase::PC5SignalingPacketTraceFunction, this));
-  
-  std::ostringstream txWithAddresses; txWithAddresses<< "/NodeList/" << ueDevs.Get (1)->GetNode()->GetId () << "/ApplicationList/0/TxWithAddresses";
-  Config::ConnectWithoutContext (txWithAddresses.str(), MakeCallback (&SlOoc1Relay1RemoteMisalignedTestCase::DataPacketSinkTxNode, this));
 
-  std::ostringstream rxWithAddresses; rxWithAddresses<< "/NodeList/" << ueDevs.Get (1)->GetNode()->GetId () << "/ApplicationList/0/RxWithAddresses";
-  Config::ConnectWithoutContext (rxWithAddresses.str(), MakeCallback (&SlOoc1Relay1RemoteMisalignedTestCase::DataPacketSinkRxNode, this));
+  std::ostringstream txWithAddresses;
+  txWithAddresses << "/NodeList/" << ueDevs.Get (1)->GetNode ()->GetId () << "/ApplicationList/0/TxWithAddresses";
+  Config::ConnectWithoutContext (txWithAddresses.str (), MakeCallback (&SlOoc1Relay1RemoteMisalignedTestCase::DataPacketSinkTxNode, this));
+
+  std::ostringstream rxWithAddresses;
+  rxWithAddresses << "/NodeList/" << ueDevs.Get (1)->GetNode ()->GetId () << "/ApplicationList/0/RxWithAddresses";
+  Config::ConnectWithoutContext (rxWithAddresses.str (), MakeCallback (&SlOoc1Relay1RemoteMisalignedTestCase::DataPacketSinkRxNode, this));
 
   NS_LOG_INFO ("Starting simulation...");
 
@@ -546,14 +535,14 @@ SlOoc1Relay1RemoteMisalignedTestSuite::SlOoc1Relay1RemoteMisalignedTestSuite ()
   preconfigurationRemote.preconfigComm.pools[0] = preconfCommPoolFactory.CreatePool ();
 
   //Test misaligned scenario
-  //Remote UE (out of coverage) detects, connects, and use relay UE to send and receive traffic (e.g. wns3-2019 type of scenario).
+  //Remote UE (out of coverage) detects, connects, and use relay UE to send and receive traffic.
   //Misalignment can be brought about by modifying the Sidelink period, Resource Blocks and Subframes etc in the preconfigurationRemote variable above.
   //Misalignment causes the test to fail.
   //Pass the variables simTime, echoClientMaxPackets, echoClientInterval, echoClientPacketSize, preconfigurationRemote
   AddTestCase (new SlOoc1Relay1RemoteMisalignedTestCase (10.0, 20, 0.2, 150, preconfigurationRemote), TestCase::QUICK);
 
   /*
-  The following tabulates the modifications that can be made to the above preconfiguration variables and the responses that can be expected from running the test scenario..
+  The following tabulates the modifications that can be made to the above preconfiguration variables and the responses that can be expected from running the test scenario.
         Variable - Value - Response
         SetDiscCpLen - NORMAL - PASS
         SetDiscCpLen - EXTENDED - PASS

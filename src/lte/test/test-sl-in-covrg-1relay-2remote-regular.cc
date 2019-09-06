@@ -94,9 +94,9 @@ private:
 
 SlInCovrg1Relay2RemoteRegularTestCase::SlInCovrg1Relay2RemoteRegularTestCase (double simTime)
   : TestCase ("Scenario with 1 eNodeB and 3 UEs using SideLink"),
-    m_simTime (simTime),
-    m_txPacketNum (0),
-    m_rxPacketNum (0)
+  m_simTime (simTime),
+  m_txPacketNum (0),
+  m_rxPacketNum (0)
 {
 }
 
@@ -198,16 +198,16 @@ SlInCovrg1Relay2RemoteRegularTestCase::DoRun (void)
   relayUeNodes.Create (nRelayUes);
 
   NodeContainer remoteUeNodes;
-  remoteUeNodes.Create(nRemoteUes);
+  remoteUeNodes.Create (nRemoteUes);
   for (uint32_t ry = 0; ry < relayUeNodes.GetN (); ry++)
     {
-      NS_LOG_INFO ("Relay UE "<<ry+1<<" node id = [" << relayUeNodes.Get (ry)->GetId () << "]");
+      NS_LOG_INFO ("Relay UE " << ry + 1 << " node id = [" << relayUeNodes.Get (ry)->GetId () << "]");
     }
   for (uint32_t rm = 0; rm < remoteUeNodes.GetN (); rm++)
     {
-      NS_LOG_INFO ("Remote UE "<<rm+1<<" node id = [" << remoteUeNodes.Get (rm)->GetId () << "]");
+      NS_LOG_INFO ("Remote UE " << rm + 1 << " node id = [" << remoteUeNodes.Get (rm)->GetId () << "]");
     }
-  NodeContainer allUeNodes = NodeContainer(relayUeNodes,remoteUeNodes);
+  NodeContainer allUeNodes = NodeContainer (relayUeNodes,remoteUeNodes);
 
   //Position of the nodes
   //eNodeB
@@ -251,7 +251,7 @@ SlInCovrg1Relay2RemoteRegularTestCase::DoRun (void)
   NetDeviceContainer enbDevs = lteHelper->InstallEnbDevice (enbNode);
   NetDeviceContainer relayUeDevs = lteHelper->InstallUeDevice (relayUeNodes);
   NetDeviceContainer remoteUeDevs = lteHelper->InstallUeDevice (remoteUeNodes);
-  NetDeviceContainer allUeDevs = NetDeviceContainer(relayUeDevs, remoteUeDevs);
+  NetDeviceContainer allUeDevs = NetDeviceContainer (relayUeDevs, remoteUeDevs);
 
   //Configure Sidelink
   Ptr<LteSlEnbRrc> enbSidelinkConfiguration = CreateObject<LteSlEnbRrc> ();
@@ -284,7 +284,7 @@ SlInCovrg1Relay2RemoteRegularTestCase::DoRun (void)
   pool.ueSelected.poolToAddModList.pools[0].pool =  pfactory.CreatePool ();
 
   //Add the pool as a default pool
-  enbSidelinkConfiguration->SetDefaultPool(pool);
+  enbSidelinkConfiguration->SetDefaultPool (pool);
 
   //Configure discovery pool
   enbSidelinkConfiguration->SetDiscEnabled (true);
@@ -383,64 +383,64 @@ SlInCovrg1Relay2RemoteRegularTestCase::DoRun (void)
   if (relayTraffic)
     {
       for (uint16_t relUeIdx = 0; relUeIdx < relayUeNodes.GetN (); relUeIdx++)
-	{
-	  uint16_t relUePort = echoPortBase+100+relUeIdx;
+        {
+          uint16_t relUePort = echoPortBase + 100 + relUeIdx;
 
-	  //UdpEchoServer in the remoteHost for the Remote UE
-	  UdpEchoServerHelper echoServerHelper (relUePort);
-	  ApplicationContainer singleServerApp = echoServerHelper.Install (remoteHost);
-	  singleServerApp.Start (Seconds (1.0));
-	  singleServerApp.Stop (Seconds (simTime));
+          //UdpEchoServer in the remoteHost for the Remote UE
+          UdpEchoServerHelper echoServerHelper (relUePort);
+          ApplicationContainer singleServerApp = echoServerHelper.Install (remoteHost);
+          singleServerApp.Start (Seconds (1.0));
+          singleServerApp.Stop (Seconds (simTime));
 
-	  serverApps.Add(singleServerApp);
+          serverApps.Add (singleServerApp);
 
 
-	  //UdpEchoClient in the Remote UE
-	  UdpEchoClientHelper echoClientHelper (remoteHostAddr);
-	  echoClientHelper.SetAttribute ("MaxPackets", UintegerValue (8000000));
-	  echoClientHelper.SetAttribute ("Interval", TimeValue (Seconds (0.20)));
-	  echoClientHelper.SetAttribute ("PacketSize", UintegerValue (150-(12)));
+          //UdpEchoClient in the Remote UE
+          UdpEchoClientHelper echoClientHelper (remoteHostAddr);
+          echoClientHelper.SetAttribute ("MaxPackets", UintegerValue (8000000));
+          echoClientHelper.SetAttribute ("Interval", TimeValue (Seconds (0.20)));
+          echoClientHelper.SetAttribute ("PacketSize", UintegerValue (150 - (12)));
 
-	  echoClientHelper.SetAttribute ("RemotePort", UintegerValue (relUePort));
+          echoClientHelper.SetAttribute ("RemotePort", UintegerValue (relUePort));
 
-	  ApplicationContainer singleClientApp = echoClientHelper.Install (relayUeNodes.Get(relUeIdx));
-	  singleClientApp.Start (Seconds (3.0) + MilliSeconds (relUeIdx*50) );
-	  singleClientApp.Stop (Seconds (simTime));
-	  clientApps.Add(singleClientApp);
+          ApplicationContainer singleClientApp = echoClientHelper.Install (relayUeNodes.Get (relUeIdx));
+          singleClientApp.Start (Seconds (3.0) + MilliSeconds (relUeIdx * 50) );
+          singleClientApp.Stop (Seconds (simTime));
+          clientApps.Add (singleClientApp);
 
-	}
+        }
     }
 
   if (remoteTraffic)
     {
 
       for (uint16_t remUeIdx = 0; remUeIdx < remoteUeNodes.GetN (); remUeIdx++)
-	{
-	  uint16_t remUePort = echoPortBase+remUeIdx;
+        {
+          uint16_t remUePort = echoPortBase + remUeIdx;
 
-	  //UdpEchoServer in the remoteHost for the Remote UE
-	  UdpEchoServerHelper echoServerHelper (remUePort);
-	  ApplicationContainer singleServerApp = echoServerHelper.Install (remoteHost);
-	  singleServerApp.Start (Seconds (1.0));
-	  singleServerApp.Stop (Seconds (simTime));
+          //UdpEchoServer in the remoteHost for the Remote UE
+          UdpEchoServerHelper echoServerHelper (remUePort);
+          ApplicationContainer singleServerApp = echoServerHelper.Install (remoteHost);
+          singleServerApp.Start (Seconds (1.0));
+          singleServerApp.Stop (Seconds (simTime));
 
-	  serverApps.Add(singleServerApp);
+          serverApps.Add (singleServerApp);
 
 
-	  //UdpEchoClient in the Remote UE
-	  UdpEchoClientHelper echoClientHelper (remoteHostAddr);
-	  echoClientHelper.SetAttribute ("MaxPackets", UintegerValue (8000000));
-	  echoClientHelper.SetAttribute ("Interval", TimeValue (Seconds (0.2)));
-	  echoClientHelper.SetAttribute ("PacketSize", UintegerValue (150-(12)));
+          //UdpEchoClient in the Remote UE
+          UdpEchoClientHelper echoClientHelper (remoteHostAddr);
+          echoClientHelper.SetAttribute ("MaxPackets", UintegerValue (8000000));
+          echoClientHelper.SetAttribute ("Interval", TimeValue (Seconds (0.2)));
+          echoClientHelper.SetAttribute ("PacketSize", UintegerValue (150 - (12)));
 
-	  echoClientHelper.SetAttribute ("RemotePort", UintegerValue (remUePort));
+          echoClientHelper.SetAttribute ("RemotePort", UintegerValue (remUePort));
 
-	  ApplicationContainer singleClientApp = echoClientHelper.Install (remoteUeNodes.Get(remUeIdx));
-	  singleClientApp.Start (Seconds (3.0) + MilliSeconds (remUeIdx*50) );
-	  singleClientApp.Stop (Seconds (simTime));
-	  clientApps.Add(singleClientApp);
+          ApplicationContainer singleClientApp = echoClientHelper.Install (remoteUeNodes.Get (remUeIdx));
+          singleClientApp.Start (Seconds (3.0) + MilliSeconds (remUeIdx * 50) );
+          singleClientApp.Stop (Seconds (simTime));
+          clientApps.Add (singleClientApp);
 
-	}
+        }
     }
   ///*** End of application configuration ***///
 
@@ -448,7 +448,7 @@ SlInCovrg1Relay2RemoteRegularTestCase::DoRun (void)
   ///*** Configure Relaying ***///
   if (useRelay)
     {
-      proseHelper->SetIpv6BaseForRelayCommunication("7777:f00e::", Ipv6Prefix (48));
+      proseHelper->SetIpv6BaseForRelayCommunication ("7777:f00e::", Ipv6Prefix (48));
 
       Ptr<EpcTft> tft = Create<EpcTft> ();
       EpcTft::PacketFilter dlpf;
@@ -459,32 +459,34 @@ SlInCovrg1Relay2RemoteRegularTestCase::DoRun (void)
       lteHelper->ActivateDedicatedEpsBearer (relayUeDevs, bearer, tft);
 
       for (uint32_t ryDevIdx = 0; ryDevIdx < relayUeDevs.GetN (); ryDevIdx++)
-	{
-	  Simulator::Schedule (Seconds (2.0 + 4*ryDevIdx), &LteSidelinkHelper::StartRelayService, proseHelper, relayUeDevs.Get (ryDevIdx), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RelayUE);
-	}
+        {
+          Simulator::Schedule (Seconds (2.0 + 4 * ryDevIdx), &LteSidelinkHelper::StartRelayService, proseHelper, relayUeDevs.Get (ryDevIdx), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RelayUE);
+        }
       for (uint32_t rmDevIdx = 0; rmDevIdx < remoteUeDevs.GetN (); rmDevIdx++)
-	{
-	  Simulator::Schedule ((Seconds (4.0 + rmDevIdx)), &LteSidelinkHelper::StartRelayService, proseHelper, remoteUeDevs.Get (rmDevIdx), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RemoteUE);
-	}
-	}
-  
+        {
+          Simulator::Schedule ((Seconds (4.0 + rmDevIdx)), &LteSidelinkHelper::StartRelayService, proseHelper, remoteUeDevs.Get (rmDevIdx), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RemoteUE);
+        }
+    }
+
   for (uint32_t i = 0; i < remoteUeDevs.GetN (); i++)
-  {
-	  std::ostringstream txWithAddresses; txWithAddresses<< "/NodeList/" << remoteUeNodes.Get(i)->GetId () << "/ApplicationList/0/TxWithAddresses";
-	  Config::ConnectWithoutContext (txWithAddresses.str(), MakeCallback (&SlInCovrg1Relay2RemoteRegularTestCase::DataPacketSinkTxNode, this));
-	  
-	  std::ostringstream rxWithAddresses; rxWithAddresses<< "/NodeList/" << remoteUeNodes.Get(i)->GetId () << "/ApplicationList/0/RxWithAddresses";
-	  Config::ConnectWithoutContext (rxWithAddresses.str(), MakeCallback (&SlInCovrg1Relay2RemoteRegularTestCase::DataPacketSinkRxNode, this));
-  }
-  
+    {
+      std::ostringstream txWithAddresses;
+      txWithAddresses << "/NodeList/" << remoteUeNodes.Get (i)->GetId () << "/ApplicationList/0/TxWithAddresses";
+      Config::ConnectWithoutContext (txWithAddresses.str (), MakeCallback (&SlInCovrg1Relay2RemoteRegularTestCase::DataPacketSinkTxNode, this));
+
+      std::ostringstream rxWithAddresses;
+      rxWithAddresses << "/NodeList/" << remoteUeNodes.Get (i)->GetId () << "/ApplicationList/0/RxWithAddresses";
+      Config::ConnectWithoutContext (rxWithAddresses.str (), MakeCallback (&SlInCovrg1Relay2RemoteRegularTestCase::DataPacketSinkRxNode, this));
+    }
+
   NS_LOG_INFO ("Starting simulation...");
 
-  Simulator::Stop (Seconds(simTime));
+  Simulator::Stop (Seconds (simTime));
 
   Simulator::Run ();
-  
+
   NS_TEST_ASSERT_MSG_EQ (m_txPacketNum, m_rxPacketNum, "Collective number of packets sent from the Remote UEs is not equal to the collective number of packets received at the Remote UEs");
-  
+
   Simulator::Destroy ();
 }
 
@@ -503,10 +505,8 @@ public:
 SlInCovrg1Relay2RemoteRegularTestSuite::SlInCovrg1Relay2RemoteRegularTestSuite ()
   : TestSuite ("sl-in-covrg-1relay-2remote-regular", SYSTEM)
 {
-  // LogComponentEnable ("TestSlInCovrg1Relay2RemoteRegular", LOG_LEVEL_ALL);
-
   //Test regular scenario
-  //2 Remote UEs detects, connects, and use Relay UE to send and receive traffic (e.g. wns3-2019 type of scenario).
+  //2 Remote UEs detects, connects, and use Relay UE to send and receive traffic.
   //Pass the variables simTime
   AddTestCase (new SlInCovrg1Relay2RemoteRegularTestCase (20.0), TestCase::QUICK);
 }

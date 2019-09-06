@@ -54,9 +54,9 @@ TypeId
 LteSlUeController::GetTypeId ()
 {
   static TypeId tid = TypeId ("ns3::LteSlUeController")
-                      .SetParent<Object> ()
-                      .SetGroupName("Lte")
-  .AddAttribute ("SlRrc",
+    .SetParent<Object> ()
+    .SetGroupName ("Lte")
+    .AddAttribute ("SlRrc",
                    "The sidelink rrc object",
                    PointerValue (),
                    MakePointerAccessor (&LteSlUeController::m_slUeRrc),
@@ -69,7 +69,7 @@ LteSlUeController::DoDispose ()
 {
 }
 
-void 
+void
 LteSlUeController::SetRrcSl (Ptr<LteSlUeRrc> slUeRrc)
 {
   NS_LOG_FUNCTION (this << slUeRrc);

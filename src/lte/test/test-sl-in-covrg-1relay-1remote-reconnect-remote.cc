@@ -112,15 +112,15 @@ private:
 
 SlInCovrg1Relay1RemoteReconnectRemoteTestCase::SlInCovrg1Relay1RemoteReconnectRemoteTestCase (Time simTime, Time startRelayTime, Time startRemoteTime, Time stopRemoteTime, Time restartRemoteTime)
   : TestCase ("Scenario with 1 eNodeB and 2 UEs using SideLink"),
-    m_simTime (simTime),
-    m_startRelayTime (startRelayTime),
-    m_startRemoteTime (startRemoteTime),
-    m_stopRemoteTime (stopRemoteTime),
-    m_restartRemoteTime (restartRemoteTime),
-    m_addressBeforeStartRemoteTime (Ipv6Address::GetOnes ()),
-    m_addressBeforeStopRemoteTime (Ipv6Address::GetOnes ()),
-    m_addressBeforeRestartRemoteTime (Ipv6Address::GetOnes ()),
-    m_addressAfterRestartRemoteTime (Ipv6Address::GetOnes ())
+  m_simTime (simTime),
+  m_startRelayTime (startRelayTime),
+  m_startRemoteTime (startRemoteTime),
+  m_stopRemoteTime (stopRemoteTime),
+  m_restartRemoteTime (restartRemoteTime),
+  m_addressBeforeStartRemoteTime (Ipv6Address::GetOnes ()),
+  m_addressBeforeStopRemoteTime (Ipv6Address::GetOnes ()),
+  m_addressBeforeRestartRemoteTime (Ipv6Address::GetOnes ()),
+  m_addressAfterRestartRemoteTime (Ipv6Address::GetOnes ())
 {
 }
 
@@ -131,13 +131,13 @@ SlInCovrg1Relay1RemoteReconnectRemoteTestCase::~SlInCovrg1Relay1RemoteReconnectR
 void
 SlInCovrg1Relay1RemoteReconnectRemoteTestCase::DataPacketSinkTxNode (Ptr<const Packet> p, const Address &src, const Address &dst)
 {
-  //std::cout<<"Packet sent! "<<Inet6SocketAddress::ConvertFrom (src).GetIpv6 ()<<" "<<Inet6SocketAddress::ConvertFrom (dst).GetIpv6 ()<<std::endl;
+  NS_LOG_INFO ("Packet sent! " << Inet6SocketAddress::ConvertFrom (src).GetIpv6 () << " " << Inet6SocketAddress::ConvertFrom (dst).GetIpv6 ());
 }
 
 void
 SlInCovrg1Relay1RemoteReconnectRemoteTestCase::DataPacketSinkRxNode (Ptr<const Packet> p, const Address &src, const Address &dst)
 {
-  //std::cout<<"Packet received! "<<Inet6SocketAddress::ConvertFrom (src).GetIpv6 ()<<" "<<Inet6SocketAddress::ConvertFrom (dst).GetIpv6 ()<<std::endl;
+  NS_LOG_INFO ("Packet received! " << Inet6SocketAddress::ConvertFrom (src).GetIpv6 () << " " << Inet6SocketAddress::ConvertFrom (dst).GetIpv6 ());
 
   if (Simulator::Now () > m_startRelayTime && Simulator::Now () < m_startRemoteTime)
     {
@@ -172,19 +172,10 @@ SlInCovrg1Relay1RemoteReconnectRemoteTestCase::DoRun (void)
   double remoteUeInitXPos = 500.0;
 
   //Configure One-To-One Communication timers and counters between Relay and Remote UE
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4111", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4103", DoubleValue (10));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4108", DoubleValue (10000));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dTRUIR", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_RUIR_maximum", DoubleValue (2));
-
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4100", DoubleValue (10000));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4101", DoubleValue (50000));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4102", DoubleValue (10000));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4103", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCR_maximum", DoubleValue (2));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCRq_maximum", DoubleValue (2));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCK_maximum", DoubleValue (2));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4108", UintegerValue (10000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4100", UintegerValue (10000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4101", UintegerValue (50000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4102", UintegerValue (10000));
 
   //Configure the UE for UE_SELECTED scenario
   Config::SetDefault ("ns3::LteUeMac::SlGrantMcs", UintegerValue (16));
@@ -205,7 +196,6 @@ SlInCovrg1Relay1RemoteReconnectRemoteTestCase::DoRun (void)
   Config::SetDefault ("ns3::LteSpectrumPhy::CtrlFullDuplexEnabled", BooleanValue (true));
   Config::SetDefault ("ns3::LteSpectrumPhy::DropRbOnCollisionEnabled", BooleanValue (false));
   Config::SetDefault ("ns3::LteUePhy::DownlinkCqiPeriodicity", TimeValue (MilliSeconds (79)));
-
 
   //Set the UEs power in dBm
   Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
@@ -283,7 +273,6 @@ SlInCovrg1Relay1RemoteReconnectRemoteTestCase::DoRun (void)
   mobilityUe2.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobilityUe2.SetPositionAllocator (positionAllocUe2);
   mobilityUe2.Install (ueNodes.Get (1));
-
 
   //Install LTE devices to the nodes
   NetDeviceContainer enbDevs = lteHelper->InstallEnbDevice (enbNode);
@@ -418,7 +407,6 @@ SlInCovrg1Relay1RemoteReconnectRemoteTestCase::DoRun (void)
   clientApps.Stop (m_simTime);
   ///*** End of application configuration ***///
 
-
   ///*** Configure Relaying ***///
   if (useRelay)
     {
@@ -436,13 +424,13 @@ SlInCovrg1Relay1RemoteReconnectRemoteTestCase::DoRun (void)
       Simulator::Schedule (m_restartRemoteTime, &LteSidelinkHelper::StartRelayService, proseHelper, ueDevs.Get (1), 33, LteSlUeRrc::ModelA, LteSlUeRrc::RemoteUE);
     }
 
-  //Config::ConnectWithoutContext ("/NodeList/*/DeviceList/*/LteUeRrc/SidelinkConfiguration/PC5SignalingPacketTrace", MakeCallback (&SlInCovrg1Relay1RemoteReconnectRemoteTestCase::PC5SignalingPacketTraceFunction, this));
+  std::ostringstream txWithAddresses;
+  txWithAddresses << "/NodeList/" << ueDevs.Get (1)->GetNode ()->GetId () << "/ApplicationList/0/TxWithAddresses";
+  Config::ConnectWithoutContext (txWithAddresses.str (), MakeCallback (&SlInCovrg1Relay1RemoteReconnectRemoteTestCase::DataPacketSinkTxNode, this));
 
-  std::ostringstream txWithAddresses; txWithAddresses<< "/NodeList/" << ueDevs.Get (1)->GetNode()->GetId () << "/ApplicationList/0/TxWithAddresses"; 
-  Config::ConnectWithoutContext (txWithAddresses.str(), MakeCallback (&SlInCovrg1Relay1RemoteReconnectRemoteTestCase::DataPacketSinkTxNode, this));
-
-  std::ostringstream rxWithAddresses; rxWithAddresses<< "/NodeList/" << remoteHost->GetId () << "/ApplicationList/0/RxWithAddresses";
-  Config::ConnectWithoutContext (rxWithAddresses.str(), MakeCallback (&SlInCovrg1Relay1RemoteReconnectRemoteTestCase::DataPacketSinkRxNode, this));
+  std::ostringstream rxWithAddresses;
+  rxWithAddresses << "/NodeList/" << remoteHost->GetId () << "/ApplicationList/0/RxWithAddresses";
+  Config::ConnectWithoutContext (rxWithAddresses.str (), MakeCallback (&SlInCovrg1Relay1RemoteReconnectRemoteTestCase::DataPacketSinkRxNode, this));
 
   NS_LOG_INFO ("Starting simulation...");
 
@@ -476,8 +464,6 @@ public:
 SlInCovrg1Relay1RemoteReconnectRemoteTestSuite::SlInCovrg1Relay1RemoteReconnectRemoteTestSuite ()
   : TestSuite ("sl-in-covrg-1relay-1remote-reconnect-remote", SYSTEM)
 {
-  // LogComponentEnable ("TestSlInCovrg1Relay1RemoteReconnectRemote", LOG_LEVEL_ALL);
-
   //Test stopping and restarting relay service for Remote UE
   //Pass the variables simTime, startRelayTime, startRemoteTime, stopRemoteTime, restartRemoteTime
   Time simTime = Seconds (10.0);

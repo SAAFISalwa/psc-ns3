@@ -114,16 +114,16 @@ private:
 
 SlOoc1Relay1RemoteRegularTestCase::SlOoc1Relay1RemoteRegularTestCase (double simTime, double echoClientMaxPackets, double echoClientInterval, double echoClientPacketSize)
   : TestCase ("Scenario with 1 eNodeB and 2 UEs using SideLink"),
-    m_simTime (simTime),
-    m_echoClientMaxPackets (echoClientMaxPackets),
-    m_echoClientInterval (echoClientInterval),
-    m_echoClientPacketSize (echoClientPacketSize),
-    m_recvRUIRq (false),
-    m_recvRUIRs (false),
-    m_srcL2IdToCompareLater (0),
-    m_dstL2IdToCompareLater (0),
-    m_txPacket (false),
-    m_rxPacket (false)
+  m_simTime (simTime),
+  m_echoClientMaxPackets (echoClientMaxPackets),
+  m_echoClientInterval (echoClientInterval),
+  m_echoClientPacketSize (echoClientPacketSize),
+  m_recvRUIRq (false),
+  m_recvRUIRs (false),
+  m_srcL2IdToCompareLater (0),
+  m_dstL2IdToCompareLater (0),
+  m_txPacket (false),
+  m_rxPacket (false)
 {
   m_srcAddressToCompareLater = Ipv6Address::GetOnes ();
   m_dstAddressToCompareLater = Ipv6Address::GetOnes ();
@@ -183,19 +183,10 @@ SlOoc1Relay1RemoteRegularTestCase::DoRun (void)
   double remoteUeInitXPos = 500.0;
 
   //Configure One-To-One Communication timers and counters between Relay and Remote UE
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4111", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4103", DoubleValue (10));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4108", DoubleValue (10000));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dTRUIR", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::relay_RUIR_maximum", DoubleValue (2));
-
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4100", DoubleValue (10000));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4101", DoubleValue (50000));
-  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4102", DoubleValue (1000));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4103", DoubleValue (10));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCR_maximum", DoubleValue (2));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCRq_maximum", DoubleValue (2));
-  //Config::SetDefault ("ns3::LteSlO2oCommParams::remote_DCK_maximum", DoubleValue (2));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::relay_dT4108", UintegerValue (10000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4100", UintegerValue (10000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4101", UintegerValue (50000));
+  Config::SetDefault ("ns3::LteSlO2oCommParams::remote_dT4102", UintegerValue (1000));
 
   //Configure the UE for UE_SELECTED scenario
   Config::SetDefault ("ns3::LteUeMac::SlGrantMcs", UintegerValue (16));
@@ -216,7 +207,6 @@ SlOoc1Relay1RemoteRegularTestCase::DoRun (void)
   Config::SetDefault ("ns3::LteSpectrumPhy::CtrlFullDuplexEnabled", BooleanValue (true));
   Config::SetDefault ("ns3::LteSpectrumPhy::DropRbOnCollisionEnabled", BooleanValue (false));
   Config::SetDefault ("ns3::LteUePhy::DownlinkCqiPeriodicity", TimeValue (MilliSeconds (79)));
-
 
   //Set the UEs power in dBm
   Config::SetDefault ("ns3::LteUePhy::TxPower", DoubleValue (23.0));
@@ -294,7 +284,6 @@ SlOoc1Relay1RemoteRegularTestCase::DoRun (void)
   mobilityUe2.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobilityUe2.SetPositionAllocator (positionAllocUe2);
   mobilityUe2.Install (ueNodes.Get (1));
-
 
   //Install LTE devices to the nodes
   NetDeviceContainer enbDevs = lteHelper->InstallEnbDevice (enbNode);
@@ -456,7 +445,7 @@ SlOoc1Relay1RemoteRegularTestCase::DoRun (void)
 
   Ptr<Ipv6StaticRouting> pgwStaticRouting = ipv6RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv6> ());
   pgwStaticRouting->AddNetworkRouteTo ("7777:f00e:0:0::", Ipv6Prefix (60), Ipv6Address ("::"), 1, 0);
-  
+
   //Attach the relay UE to the eNodeB
   lteHelper->Attach (ueDevs.Get (0));
   //If not using relay, attach the remote to the eNodeB as well
@@ -503,12 +492,14 @@ SlOoc1Relay1RemoteRegularTestCase::DoRun (void)
     }
 
   Config::ConnectWithoutContext ("/NodeList/*/DeviceList/*/LteUeRrc/SidelinkConfiguration/PC5SignalingPacketTrace", MakeCallback (&SlOoc1Relay1RemoteRegularTestCase::PC5SignalingPacketTraceFunction, this));
-  
-  std::ostringstream txWithAddresses; txWithAddresses<< "/NodeList/" << ueDevs.Get (1)->GetNode()->GetId () << "/ApplicationList/0/TxWithAddresses";
-  Config::ConnectWithoutContext (txWithAddresses.str(), MakeCallback (&SlOoc1Relay1RemoteRegularTestCase::DataPacketSinkTxNode, this));
 
-  std::ostringstream rxWithAddresses; rxWithAddresses<< "/NodeList/" << ueDevs.Get (1)->GetNode()->GetId () << "/ApplicationList/0/RxWithAddresses";
-  Config::ConnectWithoutContext (rxWithAddresses.str(), MakeCallback (&SlOoc1Relay1RemoteRegularTestCase::DataPacketSinkRxNode, this));
+  std::ostringstream txWithAddresses;
+  txWithAddresses << "/NodeList/" << ueDevs.Get (1)->GetNode ()->GetId () << "/ApplicationList/0/TxWithAddresses";
+  Config::ConnectWithoutContext (txWithAddresses.str (), MakeCallback (&SlOoc1Relay1RemoteRegularTestCase::DataPacketSinkTxNode, this));
+
+  std::ostringstream rxWithAddresses;
+  rxWithAddresses << "/NodeList/" << ueDevs.Get (1)->GetNode ()->GetId () << "/ApplicationList/0/RxWithAddresses";
+  Config::ConnectWithoutContext (rxWithAddresses.str (), MakeCallback (&SlOoc1Relay1RemoteRegularTestCase::DataPacketSinkRxNode, this));
 
   NS_LOG_INFO ("Starting simulation...");
 
@@ -536,10 +527,8 @@ public:
 SlOoc1Relay1RemoteRegularTestSuite::SlOoc1Relay1RemoteRegularTestSuite ()
   : TestSuite ("sl-ooc-1relay-1remote-regular", SYSTEM)
 {
-  // LogComponentEnable ("TestSlOoc1Relay1RemoteRegular", LOG_LEVEL_ALL);
-
   //Test regular scenario
-  //Remote UE (out of coverage) detects, connects, and use relay UE to send and receive traffic (e.g. wns3-2019 type of scenario).
+  //Remote UE (out of coverage) detects, connects, and use relay UE to send and receive traffic.
   //Pass the variables simTime, echoClientMaxPackets, echoClientInterval, echoClientPacketSize
   AddTestCase (new SlOoc1Relay1RemoteRegularTestCase (10.0, 20, 0.2, 150), TestCase::QUICK);
 }
