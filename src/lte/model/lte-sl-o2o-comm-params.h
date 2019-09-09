@@ -616,21 +616,23 @@ public:
   LteSlPc5ContextId GetContextId ();
 
   /**
-   *
+   * Return the current state
    * \return state The current state of the remote or relay UE
    */
   UeO2OCommState GetState (void) const;
+
   /**
-   *
+   * Set the current state
    * \param value The current state of the remote or relay UE to be set
    */
   void SetState (UeO2OCommState value);
 
   /**
-   *
-   * \return stateString String representation of the current state
+   * Return the string representation of the state value given as argument
+   * \param state The state value
+   * \return String representation of the state given as argument
    */
-  std::string GetStateString (UeO2OCommState value);
+  std::string GetStateString (UeO2OCommState state);
 
 };
 

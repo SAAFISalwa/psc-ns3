@@ -70,20 +70,55 @@ public:
   virtual void Pc5ConnectionAborted (uint32_t peerUeId, uint32_t selfUeId, LteSlUeRrc::RelayRole role, LteSlO2oCommParams::UeO2ORejectReason reason);
   virtual void RecvRemoteUeReport (uint64_t localImsi, uint32_t peerUeId, uint64_t remoteImsi);
 
-
+  /**
+   * Sets the name of the simulation campaign 
+   * \param campaign The name of the simulation campaign
+   */
   void SetCampaign (std::string campaign);
-  /** Discovery Campaign **/
+  /**
+   * Set the start of the relay service
+   * \param t The start of the relay service
+   */
   void SetStartRelayServiceTime (Time t);
+
+  /**
+   * Set the discovery period duration
+   * \param period The discovery period duration
+   */
   void SetDiscoveryPeriodDuration (uint32_t period);
+
+  /**
+   * Sets the number of relays to discover
+   * \param nRelays The number of relays to discover
+   */
   void SetNumberProseRelaysToDiscover (uint32_t nRelays);
 
-  //TracedCallback signature for discovering events.
+  /**
+   * TracedCallback signature for discovering events.
+   * \param [in] remoteId
+   * \param [in] relayId
+   * \param [in] timeToDis
+   * \param [in] nPeriodstoDisc
+   */
   typedef void (* DiscoveryEventTracedCallback)(const uint32_t remoteId, const uint32_t relayId,
                                                 const double timeToDisc, const uint32_t nPeriodstoDisc);
 
-  //TracedCallback signature for connection events.
+  /**
+   * TracedCallback signature for connection start events.
+   * \param [in] remoteId
+   * \param [in] relayId
+   * \param [in] connectionCount
+   */
   typedef void (* RemoteConnectionStartTracedCallback)(const uint32_t remoteId, const uint32_t relayId,
                                                        const uint32_t connectionCount);
+
+  /**
+   * TracedCallback signature for connection establised events.
+   * \param [in] remoteId
+   * \param [in] relayId
+   * \param [in] connectionCount
+   * \param [in] timeToConnect
+   */
   typedef void (* RemoteConnectionEstablishedTracedCallback)(const uint32_t remoteId, const uint32_t relayId,
                                                              const uint32_t connectionCount, const double timeToConnect);
 
@@ -114,27 +149,27 @@ protected:
 
   /** Discovery Campaign **/
 
-  /*
+  /**
    * Map the Relay UE ID of the discovered Relay UEs to the time they were discovered
    */
   std::map <uint32_t, Time> m_dicoveredRelayUeIds;
 
-  /*
+  /**
    * Time the UE started the Relay service
    */
   Time m_startRelayServiceTime;
 
-  /*
+  /**
    * The discovery period duration in ms
    */
   uint32_t m_discPeriodDuration;
 
-  /*
+  /**
    * The number of Relay UEs to discover
    */
   uint32_t m_nProseRelaysToDiscover;
 
-  /*
+  /**
    * Trace fired when the Remote UE discovered all the Relay UEs to discover
    */
   TracedCallback<uint32_t, uint32_t, double, uint32_t> m_traceDiscoversAllRelays;
@@ -142,16 +177,34 @@ protected:
 
   /** Connection Campaign **/
 
+  /** 
+   * Time the remote UE started the connection with the relay UE
+   */
   Time m_remoteStartedConnectionTime;
 
+  /**
+   * Number of connection
+   */
   uint32_t m_connectionCount;
 
+  /**
+   * Maximum number of connection attempts
+   */
   uint32_t m_maxConnectionAttempts;
 
+  /**
+   * Indicates if the remote UE connected to the relay UE
+   */
   bool m_haveConnected;
 
-  /** Traces fired upon the corresponding connection events */
+  /** 
+   * Traces fired when the connection starts 
+   */
   TracedCallback<uint32_t, uint32_t, uint32_t> m_traceRemoteConnectionStart;
+
+  /** 
+   * Traces fired when the connection is established 
+   */
   TracedCallback<uint32_t, uint32_t, uint32_t, double> m_traceRemoteConnectionEstablished;
 
 }; // end of class LteSlUeController
