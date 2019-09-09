@@ -27,3 +27,8 @@
 .. [NISTFREQHOPP] Cintrón, F.J., `"Performance Evaluation of LTE Device-to-Device Out-of-Coverage Communication
    with Frequency Hopping Resource Scheduling"
    <https://nvlpubs.nist.gov/nistpubs/ir/2018/NIST.IR.8220.pdf>`_,.
+
+.. [NIST2019] Gamboa, S., Thanigaivel, R. and Rouil, R.,
+   "System Level Evaluation of UE-to-Network Relays in D2D-enabled LTE Networks ",
+   to appear in Proceedings of the 2019 IEEE International Workshop 
+   on Computer Aided Modeling and Design of Communication Links and Networks (IEEE CAMAD 2019)

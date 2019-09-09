@@ -494,7 +494,8 @@ CheckSfnAlignment method in the test. ::
   +6.440299999s Time of CheckSfnAlignment in the test
 
 
-Finally, the test would pass if the synchronizing UE has a similar frame and
+Finally, the test would pass if the synchronizing UE has a similar
+frame and subframe number as its SyncRef UE.
 
 In-coverage Relay communication
 -------------------------------

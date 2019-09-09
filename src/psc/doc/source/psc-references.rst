@@ -17,3 +17,8 @@
    <https://www.nist.gov/publications/implementation-and-validation-lte-d2d-model-ns-3/>`_,
    in Proceedings of the Workshop on ns-3, 13-14 June 2017, Porto
    (Portugal).
+
+.. [NIST2019] Gamboa, S., Thanigaivel, R. and Rouil, R.,
+   "System Level Evaluation of UE-to-Network Relays in D2D-enabled LTE Networks ",
+   to appear in Proceedings of the 2019 IEEE International Workshop 
+   on Computer Aided Modeling and Design of Communication Links and Networks (IEEE CAMAD 2019)

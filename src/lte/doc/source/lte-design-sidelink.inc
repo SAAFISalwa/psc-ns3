@@ -8,7 +8,7 @@ Overview
 
 This section describes the |ns3| support for LTE Device to Device
 (D2D) communication based on the model published in [NIST2016]_
-[NIST2017]_ and extended to support UE-to-Network Relay operations.
+[NIST2017]_ and extended to support UE-to-Network Relay operations [NIST2019]_.
 
 
 3GPP introduced D2D Proximity Services (ProSe) in release 12 to allow ProSe
@@ -118,11 +118,11 @@ NAS
 In LTE module, the NAS layer functionality is provided by ``EpcUeNas``
 class. In addition to its existing capabilities, this class has been
 extended to support LTE ProSe services, namely direct
-communication, direct discovery, UE-to-Network Relay.
+communication, direct discovery, and UE-to-Network Relay.
 
 
 For direct communication, it supports the functions to
-activate/deactivate Sidelink bearers. Since, there is no EPS bearer
+activate/deactivate Sidelink bearers. Since there is no EPS bearer
 for Sidelink communication, the existing TFT can not be used to map IP
 packets to a Sidelink bearer. Therefore, a new type of TFT, called
 ``LteSlTft`` is implemented. It maps IP packets to the Sidelink
@@ -134,18 +134,6 @@ Sidelink bearer to send the packet, thus, prioritizing a Sidelink
 bearer over normal LTE uplink bearer. On the other hand, in off state
 in which previously UE was unable to send the packets, is now able to
 use a Sidelink bearer, if established.
-For direct communication, it supports the functions to
-activate/deactivate Sidelink bearers. Since, there is no EPS bearer
-for Sidelink communication, the existing TFT can not be used to map IP
-packets to a Sidelink bearer. Therefore, a new type of TFT, called
-``LteSlTft`` is implemented. Moreover, the Send function has been
-extended for both UE NAS "Active" and "Off" states. In the active
-state, if there is a Sidelink bearer established between the source
-and the destination UE, the UE utilizes the Sidelink bearer to send
-packets, thus prioritizing a Sidelink bearer over normal LTE uplink
-bearer. On the other hand, the off state in which previously the UE
-was unable to send packets, is now able to use a Sidelink bearer if
-established.
 
 The extensions for the direct communication are also useful for
 UE-to-Network Relay communication by helping in sending and receiving
@@ -385,203 +373,34 @@ UE-to-Network Relay communication
 
 A new type of signaling protocol, called PC5 signaling, has been
 defined to establish and maintain a secure direct communication link
-between a Relay UE and a Remote UE. A list of new PC5 signaling
-messages as given in
-:ref:`tab-state-machine-acronyms-pc5-signaling-messages` is generated
-by modeling them as ns-3 headers. The class ``LteSlO2oCommParams`` is
+between a Relay UE and a Remote UE. The new PC5 signaling
+messages are modeled as ns-3 headers.  The class ``LteSlO2oCommParams`` is
 created which will store the state of the UE, values of different
 one-to-one communication timers and counters and copies of certain PC5
-signaling messages used for retransmission purposes. The list of
-states, timers and counters are given in
-:ref:`tab-state-name-state-machine` and
-:ref:`tab-state-machine-timers-counters-notes` respectively. A
+signaling messages used for retransmission purposes. A
 one-to-one communication context is then defined as the map of UE
 layer 2 ID and its respective ``LteSlO2oCommParams``. Each UE creates
 these contexts during the connection establishment of their respective
 discovery processes.
 
-.. tabularcolumns:: |c|c|
-
-.. _tab-state-machine-acronyms-pc5-signaling-messages:
-
-.. table:: State Machine acronyms and PC5 Signaling Messages 
-
-   +----------------------------------+--------------------------------------------+
-   | Acronym in State Machine diagram | PC5 Signaling Messages                     |
-   |                                  |                                            |
-   +==================================+============================================+
-   | DCA                              | DIRECT_COMMUNICATION_RELEASE_ACCEPT        |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DCK                              | DIRECT_COMMUNICATION_KEEPALIVE             |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DCKA                             | DIRECT_COMMUNICATION_KEEPALIVE_ACK         |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DCR                              | DIRECT_COMMUNICATION_RELEASE               |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DCRA                             | DIRECT_COMMUNICATION_RELEASE_ACCEPT        |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DCRj                             | DIRECT_COMMUNICATION_REJECT                |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DCRq                             | DIRECT_COMMUNICATION_REQUEST               |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DRRq                             | DIRECT_REKEYING_REQUEST                    |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DRRs                             | DIRECT_REKEYING_RESPONSE                   |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DRT                              | DIRECT_REKEYING_TRIGGER                    |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DSMCm                            | DIRECT_SECURITY_MODE_COMMAND               |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DSMCp                            | DIRECT_SECURITY_MODE_COMPLETE              |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | DSMRj                            | DIRECT_SECURITY_MODE_REJECT                |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | RUIRq                            | REMOTE_UE_INFO_REQUEST                     |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-   | RUIRs                            | REMOTE_UE_INFO_RESPONSE                    |
-   |                                  |                                            |
-   +----------------------------------+--------------------------------------------+
-
-.. tabularcolumns:: |c|c|
-
-.. _tab-state-name-state-machine:
-
-.. table:: State Name and Corresponding state in State Machine diagram
-
-   +----------------------------------+-----------------------------------------------+
-   | State Name                       | Corresponding state in State Machine Diagram  |
-   |                                  |                                               |
-   +==================================+===============================================+
-   | RELAY_IDLE                       | Idle (shared for both Relay UE and Remote UE  |
-   |                                  | in the diagram)                               |
-   +----------------------------------+-----------------------------------------------+
-   | RELAY_SETUP_REQUEST              | setup request                                 |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | RELAY_T_SECURE_ESTABLISHED       | T_secure_established                          |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | RELAY_INIT_INFO                  | Init info                                     |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | RELAY_INIT_RELEASE               | Init release (shared for both Relay UE and    |
-   |                                  | Remote UE in the diagram)                     |
-   +----------------------------------+-----------------------------------------------+
-   | REMOTE_IDLE                      | Idle (shared for both Relay UE and Remote UE  |
-   |                                  | in the diagram)                               |
-   +----------------------------------+-----------------------------------------------+
-   | REMOTE_INIT_SETUP                | init setup                                    |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | REMOTE_SECURE_LINK               | secure link                                   |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | REMOTE_I_SECURE_ESTABLISHED      | I_secure_established                          |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | REMOTE_CHECK_LINK                | Check link                                    |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | REMOTE_INIT_RELEASE              | Init release (shared for both Relay UE and    |
-   |                                  | Remote UE in the diagram)                     |
-   +----------------------------------+-----------------------------------------------+
-   
-.. tabularcolumns:: |c|p{9cm}|
-
-.. _tab-state-machine-timers-counters-notes:
-
-.. table:: Timers and Counters in State Machine diagram
-
-   +----------------------------------+-----------------------------------------------+
-   | Timers / Counters in State       | Notes                                         |
-   | Machine diagram                  |                                               |
-   +==================================+===============================================+
-   | T4111                            | Timer 4111 used in Relay UE                   |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | T4103                            | Timer 4103 used in Relay UE and Remote UE     |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | T4108                            | Timer 4108 used in Relay UE                   |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | TRUIR                            | Timer for Remote UE Info Request procedure    |
-   |                                  | used in Relay UE                              |
-   +----------------------------------+-----------------------------------------------+
-   | T4100                            | Timer 4100 used in Remote UE                  |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | T4101                            | Timer 4101 used in Remote UE                  |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | T4102                            | Timer 4102 used in Remote UE                  |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | DCR_count                        | Counter for Direct Communication Release in   |
-   |                                  | Relay UE and Remote UE                        |
-   +----------------------------------+-----------------------------------------------+
-   | RUIR_count                       | Counter for Remote UE Info Request in Relay UE|
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | DCRq_count                       | Counter for Direct Communication Request in   |
-   |                                  | Remote UE                                     |
-   +----------------------------------+-----------------------------------------------+
-   | DCK_count                        | Counter for Direct Communication Keepalive in |
-   |                                  | Remote UE                                     |
-   +----------------------------------+-----------------------------------------------+
-   | ka_count                         | Counter for number of keepalives in Remote UE |
-   |                                  |                                               |
-   +----------------------------------+-----------------------------------------------+
-   | DCR_maximum                      | Maximum value of Direct Communication Release |
-   |                                  | counter in Relay UE and Remote UE             |
-   +----------------------------------+-----------------------------------------------+
-   | RUIR_maximum                     | Maximum value of Remote UE Info Request       |
-   |                                  | counter in Relay UE                           |
-   +----------------------------------+-----------------------------------------------+
-   | DCRq_maximum                     | Maximum value of Direct Communication Request |
-   |                                  | counter in Remote UE                          |
-   +----------------------------------+-----------------------------------------------+
-   | DCK_maximum                      | Maximum value of Direct Communication         |
-   |                                  | Keepalive counter in Remote UE                |
-   +----------------------------------+-----------------------------------------------+
-
-<Insert State Machine Diagram here>
-
-The overall implemented state machine for establishing one-to-one
-communication between Relay UE and Remote UE using PC5 Signaling
-messages is shown in the figure above. For brevity, the single figure
-contains the states and actions for the Relay UE in the blue region,
-the states and actions for the Remote UE in the white and green region
-and common states and actions for both UEs in the orange region.
-
 For UE-to-Network relay operation, the remote UE initiates the
-procedure by sending a DCR message to the relay UE. After the
-successful transfer of the DSMCm and DSMCp messages, the Relay UE
-accepts the direct communication request by sending a DCA
-message. Once established, the Relay UE may request additional
-information from the Remote UE, such as its International Mobile
-Equipment Identity (IMEI), by sending a RUIRq message, for which the
-Remote UE responds back with a RUIRs message. The reception of
+procedure by sending a DIRECT_COMMUNICATION_REQUEST message to the
+relay UE. After the successful transfer of the
+DIRECT_SECURITY_MODE_COMMAND and DIRECT_SECURITY_MODE_COMPLETE
+messages, the Relay UE accepts the direct communication request by
+sending a DIRECT_COMMUNICATION_ACCEPT message. Once established, the
+Relay UE may request additional information from the Remote UE, such
+as its International Mobile Equipment Identity (IMEI), by sending a
+REMOTE_UE_INFO_REQUEST message, for which the Remote UE responds back
+with a REMOTE_UE_INFO_RESPONSE message. The reception of
 data/signaling messages is used to indicate that the connection is
 active. However, if the Remote UE is not using the relay link for a
-while, keep alive messages called DCK and DCKA are periodically sent
-to maintain the link. When the Remote UE no longer needs to connect to
-the relay, or when the Relay UE no longer supports the Remote UE, a
-DCR and DCRA message is exchanged between the UEs.
+while, keep alive messages called DIRECT_COMMUNICATION_KEEPALIVE and
+DIRECT_COMMUNICATION_KEEPALIVE_ACK are periodically sent to maintain
+the link. When the Remote UE no longer needs to connect to the relay,
+or when the Relay UE no longer supports the Remote UE, a
+DIRECT_COMMUNICATION_RELEASE and DIRECT_COMMUNICATION_RELEASE_ACCEPT
+message is exchanged between the UEs.
 
 UE-to-Network Relay discovery
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -884,10 +703,10 @@ transmission in the uplink channel the ``LteUePhy`` includes an
 additional ``LteSpectrumPhy`` instance. In particular, the function
 ``DoConfigureUplink``, which is called by ``LteUeRrc`` is responsible
 of adding this new instance to the channel. The ``LteUePhy`` class has
-new functions PhyPscchPduReceived, PhyPsdchPduReceived and
+new functions PhyPscchPduReceived, PhyPsdchPduReceived, and
 PhyPsbchPduReceived to respectively receive control, discovery, and
 broadcast PHY PDU respectively. Similarly, ``LteSpectrumPhy`` is
-extended with new function RxSlPscch, RxSlPsdch and RxSlPsbch (and
+extended with new function RxSlPscch, RxSlPsdch, and RxSlPsbch (and
 corresponding callbacks for interconnecting PHY and MAC) to accomplish
 reception of control, discovery, and broadcast messages
 respectively. It also has the function

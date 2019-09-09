@@ -25,10 +25,10 @@ Documentation for the PSC features implemented in the |ns3| ``lte``, ``buildings
 module documentation.  This chapter documents the |ns3| ``psc`` module.
 
 At present, a large portion of the code related to public safety communications is
-found in the ProSe implementation in the ``lte`` module.  This is because
+found in the ProSe and UE-to-Network relay implementation in the ``lte`` module.  This is because
 the ProSe services of sidelink communications, discovery, and synchronization
 are deeply connected to the LTE models and difficult to factor into a
-separate module.   Features intrisic to the low-level operation of ProSe in 
+separate module. Features intrisic to the low-level operation of ProSe in 
 LTE are found in the ``lte`` module.
 
 The ``psc`` module also includes:
@@ -38,15 +38,14 @@ The ``psc`` module also includes:
 3) an energy consumption model for flying a (single/multi)rotor unmanned aerial vehicle (UAV).
 4) a new HTTP application.  
 
-There is no support for legacy public safety communications such as land
-mobile radio system (LMRS).  While IPv4 has been the main focus of development,
-some of the LTE sidelink example programs now feature an option to use IPv6.
+There is no support for legacy public safety communications such as
+land mobile radio system (LMRS).  While LTE sidelink supports both
+IPv4 and IPv6, the UE-to-Network Relay feature only supports IPv6.
 
 Future extensions to this module or other related modules such as LTE are planned for the following features:
 
 1) support for on-network modes of MCPTT, and possibly other public safety applications.
-2) UE-to-network relay.
-3) public safety scenario support code and example programs.
+2) public safety scenario support code and example programs.
 
 ---------------
 Acknowledgments
@@ -68,6 +67,7 @@ extensions:
 * Wesley Garey (wesley.garey@nist.gov)
 * Antonio Izquierdo Manzanares (antonio.izquierdomanzanares@nist.gov)
 * Richard Rouil (richard.rouil@nist.gov)
+* Raghav Thanigaivel (Raghav.Thanigaivel@colorado.edu)
 
 This release was ported from an earlier release, based on ns-3.22, to the
 ns-3.30 release, and was integrated with the LTE and buildings module, and
